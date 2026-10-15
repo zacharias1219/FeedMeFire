@@ -1,0 +1,898 @@
+<!doctype html>
+<html lang="en-US">
+<head>
+<meta charset="utf-8">
+<title>RoastMyFeed — Your taste. On trial.</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+<meta name="description" content="Give us a sample of your video taste. Get a funny, private roast that knows just enough. No login, and it never reads your watch history.">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#020204">
+<meta property="og:title" content="RoastMyFeed — Your taste. On trial.">
+<meta property="og:description" content="Pick a sample of your video taste. Get a private, AI-generated roast and a shareable card.">
+<meta property="og:type" content="website">
+<style>
+/* ---------------------------------------------------------------
+   0. GLOBAL SHELL
+--------------------------------------------------------------- */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:#020204}          /* page never scrolls */
+body{font-family:Poppins,Inter,system-ui,sans-serif;color:#fff;-webkit-font-smoothing:antialiased}
+a{text-decoration:none;color:inherit}                              /* labels must never underline */
+
+/* ---------------------------------------------------------------
+   1. FIXED DESIGN CANVAS (1172 x 657), SCALED BY ONE TRANSFORM
+--------------------------------------------------------------- */
+.stage{position:fixed;inset:0;overflow:hidden;background:#020204}
+.canvas{position:absolute;left:50%;top:0;width:1172px;height:657px;
+  transform:translateX(-50%) scale(var(--k,1));transform-origin:50% 0}
+.canvas>*{position:absolute}
+.stack{position:absolute;inset:0;z-index:300;pointer-events:none}  /* layout shell, no box of its own */
+.stack>*{position:absolute;pointer-events:auto}
+.navmenu{display:contents}
+.burger{display:none}
+
+.bg{position:absolute;inset:0;z-index:0;
+  background:
+   linear-gradient(180deg, rgba(25,127,255,0) 38%, rgba(25,127,255,.042) 54%,
+     rgba(25,127,255,.052) 68%, rgba(25,127,255,.030) 100%),
+   #020204}
+.stars{position:absolute;left:0;top:0;width:1px;height:1px;border-radius:50%;background:#fff;z-index:1}
+
+/* ---------------------------------------------------------------
+   NAV PILL
+--------------------------------------------------------------- */
+.nav{left:247px;top:3px;width:678px;height:64px;border-radius:32px;z-index:400;
+  background:rgba(255,255,255,.008);
+  border:1px solid rgba(255,255,255,.105);
+  -webkit-backdrop-filter:blur(16px) saturate(140%);
+  backdrop-filter:blur(16px) saturate(140%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
+.mark{position:absolute;left:21px;top:19px;width:24px;height:24px;
+  filter:drop-shadow(0 0 6px rgba(60,224,255,.75))}
+.wm{position:absolute;left:50px;top:0;white-space:nowrap}
+.wm .kick{position:absolute;left:3px;top:20px;font-size:4.4px;font-weight:600;
+  letter-spacing:.10em;color:#fff;opacity:.92;line-height:1}
+.wm .name{position:absolute;left:0;top:26px;transform-origin:0 50%;
+  font-family:Poppins;font-weight:900;font-size:22px;line-height:1;
+  letter-spacing:-.01em;color:#fff}
+.links{position:absolute;left:156px;top:0;height:62px;transform-origin:0 50%;
+  display:flex;align-items:center;gap:24px}
+.links a{font-size:12.5px;font-weight:400;color:rgba(255,255,255,.92);
+  white-space:nowrap;transition:opacity .25s}
+.links a:hover{opacity:.65}
+.links a:focus-visible,.legal a:focus-visible,.btn:focus-visible,.wa:focus-visible{
+  outline:2px solid rgba(120,225,255,.75);outline-offset:3px}
+
+/* ---------------------------------------------------------------
+   3. PIXEL CONTRACT B — GLOW BUTTON
+--------------------------------------------------------------- */
+.btn{display:grid;place-items:center;color:#fff;position:relative;overflow:hidden;
+  background:linear-gradient(to top,
+    #9ad9ec 1px, #89dff0 2px, #79e0f1 3px, #61daef 4px, #3ec8e4 5px,
+    #14a8c6 6px, #0596b3 7px, #038aa8 8px, #047796 9px, #006180 10px,
+    #025066 12px, #0a4f5e 13px, #04465a 14px, #073746 16px,
+    #0a2a37 18px, #0d212e 20px, #0f1824 24px, #0a121e 30px,
+    #0a111d 34px, #0a111d 100%);
+  box-shadow:
+    inset 0 3px 3px -2px rgba(180,228,255,.10),
+    inset 1px 0 0 rgba(255,255,255,.09),
+    inset -1px 0 0 rgba(255,255,255,.09),
+    var(--hair,0 1px 0 rgba(152,218,234,.38)),
+    1px 0 0 rgba(152,218,234,.17), -1px 0 0 rgba(152,218,234,.17),
+    0 0 8px rgba(60,190,235,.10),
+    0 2px 5px -3px rgba(90,220,255,.45);
+  transition:transform .25s,box-shadow .25s,filter .25s}
+.btn::before{content:"";position:absolute;left:22%;right:38%;top:0.8px;height:1.9px;z-index:1;
+  filter:blur(.55px);
+  background:linear-gradient(90deg,rgba(120,225,255,0) 0%,rgba(120,225,255,.58) 34%,
+    rgba(160,240,255,.74) 50%,rgba(120,225,255,.58) 66%,rgba(120,225,255,0) 100%)}
+.btn::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;
+  background:linear-gradient(90deg,rgba(200,245,255,.70),rgba(200,245,255,0) 13px),
+             linear-gradient(270deg,rgba(200,245,255,.70),rgba(200,245,255,0) 13px);
+  -webkit-mask:linear-gradient(to top,#000 0,#000 6px,rgba(0,0,0,.40) 12px,
+    rgba(0,0,0,.15) 18px,rgba(0,0,0,.09) 24px,rgba(0,0,0,.02) 30px,rgba(0,0,0,.02) 100%);
+          mask:linear-gradient(to top,#000 0,#000 6px,rgba(0,0,0,.40) 12px,
+    rgba(0,0,0,.15) 18px,rgba(0,0,0,.09) 24px,rgba(0,0,0,.02) 30px,rgba(0,0,0,.02) 100%)}
+.btn span{position:relative;z-index:2;display:block;line-height:1;
+  text-shadow:0 1px 2px rgba(0,20,30,.5)}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.12);
+  box-shadow:inset 0 1px 0 rgba(200,245,255,.6),inset 1px 0 0 rgba(170,225,255,.35),
+             inset -1px 0 0 rgba(170,225,255,.35),0 6px 22px rgba(20,180,225,.55)}
+.nav .btn{position:absolute;left:530.7px;top:10.5px;width:125.5px;height:39.5px;
+  border-radius:14px;font-size:14px;font-weight:500;letter-spacing:-.005em}
+.nav .btn span{margin-top:0}
+.cta2{position:absolute;left:526px;top:349px;width:121px;height:54.5px;
+  --hair:0 0 0 transparent;border-radius:13px;font-size:17px;font-weight:500;
+  letter-spacing:-.01em;z-index:300}
+.cta2::before{display:none}
+.cta2 span{margin-top:0}
+
+/* ---------------------------------------------------------------
+   2. PIXEL CONTRACT A — BADGE
+--------------------------------------------------------------- */
+.badge{left:462px;top:95px;width:250px;height:39px;border-radius:12px;z-index:300;
+  border:1px solid rgba(255,255,255,.115);
+  background:linear-gradient(to top,
+    rgba(190,225,255,.175) 0px, rgba(190,225,255,.128) 2px, rgba(190,225,255,.075) 4px,
+    rgba(190,225,255,.026) 6px, rgba(255,255,255,.012) 9px, rgba(255,255,255,.012) 100%);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}
+.badge i{position:absolute;left:4px;top:4px;width:29px;height:29px;border-radius:8px;
+  display:grid;place-items:center;
+  background:linear-gradient(to top,
+    #46afc8 0px, #35abc7 2px, #0b859d 4px, #026c84 6px, #004e66 8px,
+    #053f58 10px, #012c3d 12px, #031a2a 14px, #061125 16px, #090f25 19px,
+    #090c1c 23px, #060d16 29px);
+  box-shadow:inset 1px 0 0 rgba(150,220,250,.40),
+    inset -1px 0 0 rgba(150,220,250,.52),
+    0 0 6px rgba(60,190,230,.20), 0 3px 8px -5px rgba(90,220,255,.6)}
+.badge i svg{width:14px;height:16px;position:relative;top:-1px;left:0px}
+.badge b{position:absolute;left:45px;transform-origin:0 50%;top:0;height:39px;
+  display:flex;align-items:center;
+  font-size:13px;font-weight:400;color:rgba(255,255,255,.94);white-space:nowrap;
+  padding-top:1.5px}
+
+/* ---------------------------------------------------------------
+   5. HERO TYPE
+--------------------------------------------------------------- */
+.h1-wrap{display:contents;font:inherit}
+.h1{display:block;position:absolute;left:586px;transform:translateX(-50%);white-space:nowrap;line-height:1;
+  font-family:Poppins;font-weight:900;font-size:54px;letter-spacing:-.004em;
+  word-spacing:.175em;text-transform:uppercase;color:#fff;
+  text-shadow:0 0 34px rgba(130,180,255,.22);z-index:300}
+.sub{left:586px;transform:translateX(-50%);white-space:nowrap;line-height:1;
+  font-size:13.2px;color:#a9aeb5;z-index:300}
+.sub b{font-weight:600;color:#fff}
+.nb{white-space:nowrap}
+
+/* ---------------------------------------------------------------
+   6. CAROUSEL — TRUE 3D PERSPECTIVE RING
+--------------------------------------------------------------- */
+.showcase{position:absolute;left:0;top:0;width:1172px;height:0}
+.ring{position:absolute;left:0;top:0;width:1172px;height:657px;z-index:5;
+  perspective:891px;perspective-origin:586px 918px;transform-style:preserve-3d;
+  pointer-events:none}
+.card{position:absolute;left:586px;top:616px;width:130px;height:300px;
+  margin:-150px 0 0 -65px;border-radius:12px;overflow:hidden;background:#0d1117;
+  box-shadow:0 24px 46px rgba(0,0,0,.6),0 3px 8px rgba(0,0,0,.5);
+  backface-visibility:hidden;will-change:transform}
+.card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.card .edge{position:absolute;inset:0;border-radius:12px;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.15),
+             inset 0 16px 30px rgba(255,255,255,.05)}
+.card.broken img{display:none}
+.cv{position:absolute;left:0;right:0;padding:0 10px}
+.fill{position:absolute;inset:0}
+.ph{position:absolute;left:0;right:0;overflow:hidden;
+  background:linear-gradient(155deg,#2b3b50,#131c28 60%,#1d1526)}
+.phf{top:0;bottom:0}
+.ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.dot{display:inline-block;width:4.5px;height:4.5px;background:#e5202f;
+  margin-right:4px;transform:rotate(45deg) translateY(-1px)}
+.dot.sq{transform:none;width:6.5px;height:4.5px;border-radius:1px}
+.t-big{font-family:Poppins;font-weight:900;text-transform:uppercase;line-height:.96;
+  letter-spacing:-.015em;white-space:nowrap;transform:scaleX(.875);
+  transform-origin:left center}
+.t-serif{font-family:"Playfair Display",serif;line-height:1.02;letter-spacing:.01em;
+  white-space:nowrap}
+
+/* ---------------------------------------------------------------
+   9. BROWSER MOCK (in FRONT of the ring, bleeding off the bottom)
+--------------------------------------------------------------- */
+.browser{position:absolute;left:165px;top:558px;width:842px;
+  height:calc(99px + var(--fill,0px));
+  border-radius:28px 28px 0 0;overflow:hidden;z-index:100;
+  box-shadow:0 -14px 44px rgba(0,0,0,.55)}
+.browser::before{content:"";position:absolute;left:0;right:0;top:42px;bottom:0;
+  background:rgba(20,20,26,.82);z-index:0}
+.bar{position:absolute;left:0;top:0;width:100%;height:42px;z-index:1;
+  background:linear-gradient(180deg,rgba(20,24,48,.48),rgba(15,19,38,.58));
+  -webkit-backdrop-filter:blur(6px) saturate(112%);backdrop-filter:blur(6px) saturate(112%)}
+.dots{position:absolute;left:27px;top:16px;display:flex;gap:2.6px}
+.dots i{width:7.6px;height:7.6px;border-radius:50%}
+.omni{position:absolute;left:246px;top:7px;width:336px;height:26px;border-radius:5px;
+  background:rgba(9,13,26,.93);box-shadow:inset 0 0 0 1px rgba(255,255,255,.045);
+  display:flex;align-items:center;justify-content:center;gap:6px}
+.omni svg{width:9px;height:9px;opacity:.72}
+.omni span{font-size:9.5px;color:rgba(255,255,255,.72);letter-spacing:.005em}
+.tools{position:absolute;right:27px;top:14px;display:flex;align-items:center;gap:4px;opacity:.9}
+.tools svg{width:11px;height:12px}
+.page{position:absolute;left:7px;right:6px;top:42px;bottom:0;background:#fff;z-index:1;
+  color:#111;overflow:hidden;border-radius:10px 10px 0 0}
+.ann{position:absolute;left:0;top:0;width:100%;height:16px;background:#101210;
+  display:grid;place-items:center;border-radius:10px 10px 0 0}
+.ann span{font-size:5px;letter-spacing:.06em;color:#cfcfcf}
+.ann u{position:absolute;font-size:6px;color:#9a9a9a;text-decoration:none}
+.shoplogo{position:absolute;left:50%;transform:translateX(-50%);top:24px;text-align:center}
+.shoplogo em{display:block;font-family:"Playfair Display",serif;font-style:normal;font-weight:600;
+  font-size:15px;letter-spacing:.14em;line-height:1;color:#111}
+.shoplogo i{display:block;font-style:normal;font-size:5px;letter-spacing:.3em;color:#3a3a3a;margin-top:3px}
+.shopicons{position:absolute;right:100px;top:33px;display:flex;gap:5px;opacity:.85}
+.shopicons svg{width:7px;height:7px}
+.pagebody{position:absolute;left:0;right:0;top:62px;bottom:0;background:#fff;overflow:hidden}
+.pghero{position:relative;margin:0 26px;height:158px;border-radius:7px;overflow:hidden;
+  background:linear-gradient(120deg,#e8dcd4,#cbb6a8)}
+.pghero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pghero .scrim{position:absolute;inset:0;
+  background:linear-gradient(90deg,rgba(28,20,16,.62) 0%,rgba(28,20,16,.30) 46%,rgba(28,20,16,0) 72%)}
+.pghero .copy{position:absolute;left:22px;top:50%;transform:translateY(-50%);color:#fff}
+.pghero .copy u{display:block;font-size:4.6px;letter-spacing:.26em;text-transform:uppercase;opacity:.9;text-decoration:none}
+.pghero .copy em{display:block;font-family:"Playfair Display",serif;font-style:normal;font-weight:600;
+  font-size:15px;line-height:1.12;margin-top:6px}
+.pghero .copy i{display:inline-block;font-style:normal;margin-top:10px;padding:5px 13px;border-radius:20px;
+  background:#fff;color:#17181c;font-size:5.2px;font-weight:600;letter-spacing:.06em}
+.pgsec{display:flex;align-items:baseline;justify-content:space-between;margin:16px 26px 9px}
+.pgsec b{font-family:"Playfair Display",serif;font-weight:600;font-size:9px;color:#17181c}
+.pgsec u{font-size:4.6px;letter-spacing:.14em;color:#8a8a8a;text-transform:uppercase;text-decoration:none}
+.pggrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:0 26px}
+.pgcard .ph{position:relative;height:0;padding-bottom:104%;border-radius:6px;overflow:hidden;
+  background:linear-gradient(150deg,#efe7e1,#ddcfc6)}
+.pgcard .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pgcard .tag{position:absolute;left:6px;top:6px;padding:2px 5px;border-radius:3px;z-index:1;
+  background:#17181c;color:#fff;font-size:3.8px;font-weight:600;letter-spacing:.1em}
+.pgcard b{display:block;margin-top:6px;font-size:5.4px;font-weight:600;color:#17181c;letter-spacing:.01em}
+.pgcard i{display:block;font-style:normal;margin-top:2px;font-size:4.6px;color:#8a8a8a}
+.pgcard s{display:block;margin-top:3px;font-size:5.6px;font-weight:700;color:#17181c;text-decoration:none}
+.pgstrip{display:flex;justify-content:space-between;margin:16px 26px 0;padding:9px 0;
+  border-top:1px solid #eee6e0;border-bottom:1px solid #eee6e0}
+.pgstrip span{font-size:4.4px;letter-spacing:.12em;color:#7d7169;text-transform:uppercase}
+
+/* ---------------------------------------------------------------
+   SUPPORT BUTTON (template's floating WhatsApp slot, re-purposed)
+   and LEGAL BAR (LP-04/05/06) — both outside .canvas, inside .stage
+--------------------------------------------------------------- */
+.wa{position:absolute;right:16px;bottom:24px;width:56px;height:56px;border-radius:50%;
+  background:linear-gradient(160deg,#3ec8e4,#0a6c8a);display:grid;place-items:center;z-index:320;
+  box-shadow:0 8px 20px rgba(0,0,0,.5)}
+.wa svg{width:28px;height:28px}
+.wa::after{content:"";position:absolute;inset:0;border-radius:50%;
+  border:2px solid rgba(62,200,228,.5);animation:pulse 2.8s ease-out infinite}
+@keyframes pulse{0%{transform:scale(1);opacity:.75}70%{transform:scale(1.4);opacity:0}100%{opacity:0}}
+
+.legal{position:absolute;left:0;right:0;bottom:0;z-index:310;height:36px;
+  display:flex;align-items:center;justify-content:center;gap:22px;padding:0 84px;
+  font-size:11px;line-height:1.35;color:rgba(255,255,255,.62);
+  background:rgba(2,2,4,.84);border-top:1px solid rgba(255,255,255,.07);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.legal nav{display:flex;gap:16px}
+.legal a{color:rgba(255,255,255,.88)}
+.legal a:hover{color:#fff;text-decoration:underline}
+.legal p{white-space:nowrap}
+
+/* ---------------------------------------------------------------
+   12. ENTRANCE RESTING STATES
+   Individual translate/scale/clip-path props are used (not `transform`)
+   because `transform` is owned by the pixel fitter and the ring loop;
+   individual props compose with it instead of colliding.
+--------------------------------------------------------------- */
+html.intro .nav{opacity:0;translate:0 -9px}
+html.intro .mark,html.intro .wm,html.intro .links a,html.intro .nav .btn,html.intro .burger{opacity:0;translate:0 6px}
+html.intro .badge{opacity:0;translate:0 11px;scale:.985}
+html.intro .h1{opacity:0;translate:0 15px;clip-path:inset(100% 0 -30% 0)}
+html.intro .sub{opacity:0;translate:0 10px}
+html.intro .cta2{opacity:0;translate:0 13px;scale:.985}
+html.intro .ring{opacity:0;translate:0 18px;scale:.99}
+html.intro .browser{opacity:0;translate:0 26px}
+html.intro .wa{opacity:0;scale:.88}
+html.intro .legal{opacity:0}
+@media (prefers-reduced-motion:reduce){
+  html.intro .nav,html.intro .mark,html.intro .wm,html.intro .links a,html.intro .nav .btn,
+  html.intro .burger,html.intro .badge,html.intro .h1,html.intro .sub,html.intro .cta2,
+  html.intro .ring,html.intro .browser,html.intro .wa,html.intro .legal{
+    opacity:1;translate:none;scale:none;clip-path:none}
+  .wa::after{animation:none;display:none}
+}
+
+/* ---------------------------------------------------------------
+   10. RESPONSIVE
+--------------------------------------------------------------- */
+/* shared narrow-viewport nav: same DOM nodes, re-laid-out as a panel */
+@media (max-width:1080px){
+  .burger{display:grid;place-content:center;gap:4px;position:absolute;right:12px;top:11px;
+    width:42px;height:42px;padding:0;border:0;border-radius:14px;background:transparent;
+    cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .burger span{display:block;width:19px;height:1.6px;border-radius:2px;
+    background:rgba(255,255,255,.92);
+    transition:transform .28s cubic-bezier(.4,0,.2,1),opacity .18s}
+  .burger:focus-visible{outline:2px solid rgba(120,225,255,.7);outline-offset:2px}
+  .nav.open .burger span:nth-child(1){transform:translateY(5.6px) rotate(45deg)}
+  .nav.open .burger span:nth-child(2){opacity:0}
+  .nav.open .burger span:nth-child(3){transform:translateY(-5.6px) rotate(-45deg)}
+  .navmenu{display:block;position:absolute;left:0;right:0;top:74px;padding:12px;
+    border-radius:22px;border:1px solid rgba(255,255,255,.10);
+    background:linear-gradient(180deg,rgba(11,15,22,.985),rgba(7,10,16,.99));
+    -webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);
+    box-shadow:0 26px 60px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.05);
+    opacity:0;visibility:hidden;transform:translateY(-8px);
+    transition:opacity .24s ease,transform .28s cubic-bezier(.4,0,.2,1),visibility .28s}
+  .nav.open .navmenu{opacity:1;visibility:visible;transform:none}
+  .links{position:static;display:flex;flex-direction:column;align-items:stretch;
+    height:auto;gap:2px;transform:none!important}
+  .links a{font-size:15px;padding:11px 14px;border-radius:12px;color:rgba(255,255,255,.9);
+    transition:background .2s,color .2s}
+  .nav .btn{position:static;width:100%;height:46px;margin-top:10px;font-size:15px}
+  .nav .btn span{margin-top:3px}
+}
+@media (hover:hover) and (max-width:1080px){
+  .burger:hover span{background:#fff}
+  .links a:hover{background:rgba(255,255,255,.055);color:#fff;opacity:1}
+}
+@media (prefers-reduced-motion:reduce){.navmenu,.burger span{transition:none}}
+
+/* TABLET 701–1080 */
+@media (min-width:701px) and (max-width:1080px){
+  .nav{left:286px;width:620px}
+  .badge{left:448px;width:277px}
+  .stack{transform:translateY(var(--stshift,0px))}
+  .showcase{transform:translateY(var(--sshift,0px))}
+  .ring{transform:scale(var(--rs,1));transform-origin:586px 595px}
+  .wa{width:58px;height:58px;right:22px;bottom:44px}
+  .wa svg{width:30px;height:30px}
+}
+
+/* PHONE <=700 : genuine flow column */
+@media (max-width:700px){
+  .canvas{position:relative;left:auto;top:auto;width:100%;height:100%;transform:none;
+    display:flex;flex-direction:column;align-items:center;padding:0 20px 64px}
+  .canvas>*{position:static}
+  .stack{display:contents}
+  .stack>*{position:static}
+  .nav{position:relative;left:auto;top:auto;width:100%;max-width:500px;height:58px;
+    margin-top:clamp(10px,1.5vh,15px);flex:0 0 auto}
+  .nav .mark,.mark{position:absolute;left:16px;top:calc(50% - 13px);width:26px;height:26px}
+  .wm{left:49px;top:0;height:100%}
+  .wm .kick{top:calc(50% - 15px);font-size:5px;letter-spacing:.2em}
+  .wm .name{top:calc(50% - 9px);font-size:18px;transform:scaleX(.88);transform-origin:left center}
+  .burger{right:8px;top:7px;width:44px;height:44px}
+  .navmenu{top:68px;padding:12px}
+  .links a{font-size:16px;padding:12px 15px;border-radius:12px}
+  .nav .btn{height:48px;margin-top:10px;font-size:16px}
+  .badge{position:relative;left:auto;top:auto;margin-top:clamp(16px,2.6vh,26px);
+    width:auto;max-width:100%;height:36px;flex:0 0 auto;border-radius:18px}
+  .badge b{position:relative;left:auto;top:auto;height:36px;padding:0 15px 0 42px;font-size:12.5px}
+  .badge i{top:4px;left:4px;width:28px;height:28px}
+  .badge i svg{width:13px;height:19px}
+  .h1{position:relative;left:auto;top:auto;transform:none;white-space:normal;
+    text-align:center;font-size:clamp(29px,8.4vw,36px);line-height:1.06;
+    letter-spacing:-.01em;max-width:7.4em}
+  .h1.l1{margin-top:clamp(12px,2.2vh,20px)}
+  .sub{position:relative;left:auto;top:auto;transform:none;white-space:normal;
+    text-align:center;font-size:clamp(14px,3.9vw,15.5px);line-height:1.5;max-width:340px}
+  .sub.s1{margin-top:clamp(10px,1.8vh,16px)}
+  .cta2{position:relative;left:auto;top:auto;margin-top:clamp(16px,2.6vh,26px);
+    flex:0 0 auto;width:auto;min-width:158px;height:52px;padding:0 26px;font-size:16px}
+  .showcase{position:relative;left:auto;top:auto;flex:1 1 auto;width:100%;height:auto;
+    min-height:224px;transform:none}
+  .ring{position:absolute;left:50%;margin-left:-586px;top:-446px;bottom:auto;
+    width:1172px;height:657px;transform-origin:586px 466px;transform:scale(1.02)}
+  .browser{position:absolute;left:50%;transform:translateX(-50%);top:212px;bottom:0;
+    width:calc(100% + 40px);height:auto;border-radius:22px 22px 0 0}
+  .browser .bar{height:36px}
+  .omni{left:50%;transform:translateX(-50%);width:58%;height:24px;top:6px}
+  .omni span{font-size:9px}
+  .dots{top:14px}
+  .tools{display:none}
+  .ann{height:15px}
+  .ann span{font-size:6px}
+  .page{top:36px}
+  .pagebody{top:56px}
+  .pghero{margin:0 18px;height:122px;border-radius:10px}
+  .pghero .copy{left:18px}
+  .pghero .copy u{font-size:7.5px;letter-spacing:.2em}
+  .pghero .copy em{font-size:18px;margin-top:5px}
+  .pghero .copy i{font-size:8.5px;padding:6px 13px;margin-top:8px}
+  .pgsec{margin:16px 18px 10px}
+  .pgsec b{font-size:14px}
+  .pgsec u{font-size:8px}
+  .pggrid{grid-template-columns:repeat(2,1fr);gap:14px;margin:0 18px}
+  .pgcard .ph{border-radius:9px}
+  .pgcard .tag{font-size:7px;padding:3px 7px;border-radius:4px}
+  .pgcard b{font-size:10.5px;margin-top:7px}
+  .pgcard i{font-size:8.5px}
+  .pgcard s{font-size:11.5px;margin-top:4px}
+  .pgstrip{margin:16px 18px 0;flex-wrap:wrap;gap:5px 16px}
+  .pgstrip span{font-size:8px}
+  .wa{width:54px;height:54px;right:14px;bottom:78px}
+  .wa svg{width:27px;height:27px}
+  .legal{height:64px;flex-direction:column;justify-content:center;align-items:flex-start;
+    gap:4px;padding:0 14px;font-size:10px}
+  .legal p{white-space:normal}
+}
+</style>
+<script>
+/* Armed before first paint; the timer guarantees content is never stranded invisible. */
+document.documentElement.classList.add('intro');
+setTimeout(function(){document.documentElement.classList.remove('intro');},4000);
+</script>
+</head>
+<body>
+<main class="stage" id="stage">
+  <div class="bg"></div>
+  <div class="stars" id="stA" aria-hidden="true"></div>
+  <div class="stars" id="stB" aria-hidden="true"></div>
+
+  <div class="canvas" id="canvas">
+    <div class="stack">
+
+      <!-- NAV -->
+      <header class="nav" id="nav">
+        <svg class="mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="sw" x1="8" y1="8" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#8ef4ff"/><stop offset=".5" stop-color="#35d8ff"/><stop offset="1" stop-color="#0a86d8"/>
+            </linearGradient>
+            <linearGradient id="sw2" x1="40" y1="10" x2="10" y2="40" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#a6f7ff"/><stop offset="1" stop-color="#0f9ae0" stop-opacity=".25"/>
+            </linearGradient>
+          </defs>
+          <g transform="rotate(-32 24 24)">
+            <ellipse cx="24" cy="24" rx="18.5" ry="9.6" stroke="url(#sw2)" stroke-width="3.1"
+              stroke-linecap="round" stroke-dasharray="58 30" stroke-dashoffset="14"/>
+            <circle cx="41.4" cy="20.6" r="3.1" fill="#bff6ff"/>
+          </g>
+          <circle cx="24" cy="24" r="6.6" fill="url(#sw)"/>
+          <circle cx="24" cy="24" r="2.6" fill="#fff"/>
+        </svg>
+        <a class="wm" href="/" aria-label="RoastMyFeed home">
+          <span class="kick">MY FEED</span>
+          <span class="name" id="wmName">ROAST</span>
+        </a>
+        <button class="burger" type="button" aria-label="Opens menu" aria-expanded="false" aria-controls="navmenu">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="navmenu" id="navmenu">
+          <nav class="links" id="links" aria-label="Primary">
+            <a href="/how-it-works">How it works</a>
+            <a href="/safety">Safety</a>
+            <a href="/privacy">Privacy</a>
+            <a href="/terms">Terms</a>
+            <a href="/support">Support</a>
+          </nav>
+          <a class="btn" href="/demo"><span id="ctaLabel">Try the demo</span></a>
+        </div>
+      </header>
+
+      <!-- BADGE -->
+      <div class="badge">
+        <i aria-hidden="true"><svg viewBox="5 1 14 22" preserveAspectRatio="none" fill="rgba(16,112,152,.72)"
+          stroke="rgba(190,236,255,.6)" stroke-width="1.6" stroke-linejoin="round">
+          <path d="M13.9 1.6 5.5 13.6a.7.7 0 0 0 .6 1.1h4.2l-1 7.7a.7.7 0 0 0 1.25.55l8.3-12.1a.7.7 0 0 0-.6-1.1h-4.2l1-7.7a.7.7 0 0 0-1.25-.55Z"/></svg></i>
+        <b id="badgeTxt">Never reads your watch history</b>
+      </div>
+
+      <!-- HERO TYPE -->
+      <h1 class="h1-wrap">
+        <span class="h1 l1" id="h1a">Your taste on trial</span>
+        <span class="h1" id="h1b">Guilty.</span>
+      </h1>
+      <p class="sub s1" id="sub1"><b>Pick 10+ video titles, channels and interests</b> and get</p>
+      <p class="sub" id="sub2">a funny, private roast, never your real history.</p>
+
+      <a class="btn cta2" href="/start"><span id="vpLabel">Start roast</span></a>
+    </div>
+
+    <div class="showcase">
+      <div class="ring" id="ring" aria-hidden="true"></div>
+
+      <div class="browser" role="img"
+        aria-label="Example report preview, fictional sample. Persona: The Tutorial Collector. Headline: your tutorial queue has become a lifestyle. Observations such as 'Preparation is the hobby', each with a 'Why this joke?' evidence section.">
+        <div class="bar">
+          <div class="dots"><i style="background:#ee5c62"></i><i style="background:#f6b719"></i><i style="background:#12c02f"></i></div>
+          <div class="omni">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
+            <span>Private report - expires in 24h</span>
+          </div>
+          <div class="tools">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 15v5h16v-5"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 8l9 5 9-5-9-5Z" fill="#fff" opacity=".95"/><path d="M3 13l9 5 9-5" opacity=".55"/></svg>
+          </div>
+        </div>
+        <div class="page">
+          <div class="ann"><u style="left:20px">&#8249;</u><span>AI-generated entertainment. Not your watch history.</span><u style="right:20px">&#8250;</u></div>
+          <div class="shoplogo"><em>ROASTMYFEED</em><i>YOUR REPORT</i></div>
+          <div class="shopicons">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c0-4.2 3.4-6.6 7.5-6.6s7.5 2.4 7.5 6.6"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 8h13l-1.2 12H6.7L5.5 8Z"/><path d="M9 8V6.2A3 3 0 0 1 15 6.2V8"/></svg>
+          </div>
+          <div class="pagebody">
+            <div class="pghero">
+              <img alt="Warm amber and ivory skincare collection in golden morning light" decoding="async" src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260912_110504_0316394c-37bd-432b-a1f2-ee46a461c22b.png">
+              <div class="scrim"></div>
+              <div class="copy"><u>Fictional example</u><em>&ldquo;Your tutorial queue<br>has become a lifestyle.&rdquo;</em><i>THE TUTORIAL COLLECTOR</i></div>
+            </div>
+            <div class="pgsec"><b>Your observations</b><u>why this joke?</u></div>
+            <div class="pggrid">
+              <div class="pgcard"><div class="ph"><span class="tag">SPICY</span><img alt="Vitamin C serum in amber glass" decoding="async" src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260912_110423_3b5dcf24-cc07-4f3b-8423-b597fffcdbfb.png"></div><b>Preparation is the hobby</b><i>Evidence · 2 items</i><s>More beginner guides than beginnings</s></div>
+              <div class="pgcard"><div class="ph"><img alt="Nourishing lotion jar on soft linen" decoding="async" src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260912_110504_50ec81be-8341-447f-a0c2-a5673a465447.png"></div><b>Minimalism, with setup tours</b><i>Evidence · 2 items</i><s>The contradiction writes itself</s></div>
+              <div class="pgcard"><div class="ph"><span class="tag">SAVAGE</span><img alt="Three-piece Sunset Renewal skincare kit" decoding="async" src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260912_110504_fd208d72-9112-4cde-b509-8d273b470c6f.png"></div><b>Productivity binge</b><i>Evidence · 3 items</i><s>Watching the work instead of working</s></div>
+              <div class="pgcard"><div class="ph"><span class="tag">GENTLE</span><img alt="Lightweight facial sunscreen beside clear water" decoding="async" src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260912_110504_9731544c-a83b-48c4-bacb-e31e4d4b9f42.png"></div><b>Curiosity with stamina</b><i>Evidence · 2 items</i><s>An affectionate closer</s></div>
+            </div>
+            <div class="pgstrip">
+              <span>AI-generated entertainment</span><span>Based only on your sample</span><span>Expires in 24 hours</span><span>Delete anytime</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <a class="wa" href="/support" aria-label="Contact support">
+    <svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M5 7.5A2.5 2.5 0 0 1 7.5 5h17A2.5 2.5 0 0 1 27 7.5v12a2.5 2.5 0 0 1-2.5 2.5H14l-6 5v-5H7.5A2.5 2.5 0 0 1 5 19.5v-12Z"/>
+      <path d="M11 11.5h10M11 16h6" />
+    </svg>
+  </a>
+
+  <footer class="legal">
+    <nav aria-label="Legal"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/support">Support</a></nav>
+    <p>Independent entertainment product. Not affiliated with or endorsed by YouTube.</p>
+  </footer>
+</main>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------------- constants ---------------- */
+var CW=1172, CH=657;                  // design canvas
+var TAB_MAX=1080, TAB_MIN=701, DW_MIN=920, PH_MAX=700;
+var BIAS=1.1;                         // reference sits button labels ~0.6px below true centre
+var $=function(s,r){return (r||document).querySelector(s)};
+var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+
+var canvas=$('#canvas'), nav=$('#nav'), ringEl=$('#ring');
+var reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
+var k=1, mobile=false, tablet=false, tboost=1;
+
+/* ---------------- starfield: one giant box-shadow list per layer ---------------- */
+function stars(el,n,blur,aMin,aMax){
+  var s=[];
+  for(var i=0;i<n;i++){
+    s.push((Math.random()*100).toFixed(2)+'vw '+(Math.random()*100).toFixed(2)+'vh '+blur+'px 0 rgba(255,255,255,'+
+      (aMin+Math.random()*(aMax-aMin)).toFixed(2)+')');
+  }
+  el.style.boxShadow=s.join(',');
+}
+stars($('#stA'),150,0,.05,.30);
+stars($('#stB'),18,1.2,.35,.70);
+
+/* ---------------- ring creatives ---------------- */
+var BASE='https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/';
+var SHOTS=[
+  {v:'pay',   url:BASE+'hf_20260912_110422_0fc34393-7417-41b0-a200-43fd2b08a37f.png'},
+  {v:'launch',url:BASE+'hf_20260912_110423_ba46182e-43bc-43a8-9007-a8234acf442d.png'},
+  {v:'shop',  url:BASE+'hf_20260912_110423_06cfbb84-6f96-48f6-be45-e03516510e48.png'},
+  {v:'brand', url:BASE+'hf_20260912_110422_634bf390-f171-4f5d-9151-0d2c86c26e7b.png'},
+  {v:'frete', url:BASE+'hf_20260912_110423_0cfe058d-db0e-4ee6-9708-7a297cc11a7a.png'},
+  {v:'plain', t:'TUTORIAL QUEUE', url:BASE+'hf_20260912_110422_a90a35d7-ae20-4ce3-86d7-e3f6f658a6bc.png'},
+  {v:'power', url:BASE+'hf_20260912_110422_de267714-7647-4d9a-a0a9-55325683b2a2.png'},
+  {v:'plain', t:'COOKING AT 2AM', url:BASE+'hf_20260912_110504_80eda275-e380-4ccb-b51f-332f25337079.png'},
+  {v:'off',   url:BASE+'hf_20260912_110422_d6ba08f5-4ff8-4f09-8abe-93ee6bb0e34e.png'},
+  {v:'plain', t:'LO-FI TO FOCUS', url:BASE+'hf_20260912_110423_87ec2115-3157-47ef-ac98-973f8ad6532d.png'}
+];
+
+/* Card copy is RoastMyFeed's, laid over the template's photographs
+   (the photographs carry no text; all type is HTML/CSS overlay). */
+function creative(d){
+  var im='<img alt="" decoding="async" src="'+d.url+'">';
+  switch(d.v){
+  case 'pay': return ''+
+    '<div class="fill" style="background:#efedea"></div>'+
+    '<div class="ph" style="top:112px;bottom:0">'+im+'</div>'+
+    '<svg class="ph" style="top:118px;bottom:0;background:none" viewBox="0 0 130 182" preserveAspectRatio="none">'+
+      '<g stroke="#e5202f" stroke-width="8" fill="none" opacity=".92" stroke-linecap="square">'+
+      '<path d="M2 42h30M14 30v96M4 100l26-16"/><path d="M96 34v58M120 34v58M96 92q12 15 24 0"/>'+
+      '<path d="M92 108l14 34M126 108l-12 34"/></g></svg>'+
+    '<div class="cv" style="top:20px;text-align:right;font-size:3.4px;letter-spacing:.15em;color:#8d9298">INTENSITY LEVEL ONE</div>'+
+    '<div class="cv t-big" style="top:32px;font-size:14px;color:#16171b">Gentle</div>'+
+    '<div class="cv t-big" style="top:47px;font-size:14px;color:#e5202f">Teasing</div>'+
+    '<div class="cv" style="top:76px;font-size:5.2px;font-weight:700;color:#16171b;line-height:1.7">'+
+      '<div><b class="dot"></b>AFFECTIONATE <b>JOKES</b></div>'+
+      '<div style="margin-top:8px"><b class="dot sq"></b>NO <b>PROFANITY</b><br><span style="margin-left:11px">EVER</span></div></div>';
+  case 'launch': return ''+
+    '<div class="fill" style="background:linear-gradient(168deg,#f9d9e5,#f3bdd2 55%,#e8a3c0)"></div>'+
+    '<div class="ph" style="top:100px;bottom:0">'+im+'<div class="fill" style="background:linear-gradient(180deg,rgba(249,217,229,.97),rgba(249,217,229,0) 30%)"></div></div>'+
+    '<div class="cv t-serif" style="top:36px;font-size:17px;color:#b03a63">TUTORIAL</div>'+
+    '<div class="cv t-serif" style="top:55px;font-size:17px;color:#b03a63">COLLECTOR!</div>';
+  case 'shop': return ''+
+    '<div class="fill" style="background:#fff"></div>'+
+    '<div class="ph" style="top:0;height:148px">'+im+'</div>'+
+    '<div class="cv" style="top:158px;font-size:5.4px;font-weight:700;letter-spacing:.09em;color:#16171b">YOUR VIEWING PERSONA</div>'+
+    '<div class="cv" style="top:168px;font-size:4.2px;color:#7b8087">Fictional · Funny · Yours</div>'+
+    '<div style="position:absolute;left:10px;top:180px;padding:4px 11px;border-radius:20px;background:#16171b;font-size:4.6px;font-weight:600;color:#fff;letter-spacing:.05em">See my persona</div>';
+  case 'brand': return ''+
+    '<div class="fill" style="background:linear-gradient(180deg,#0a2a4a,#0d3a63 50%,#08192b)"></div>'+
+    '<div class="ph" style="top:92px;bottom:0">'+im+'<div class="fill" style="background:linear-gradient(180deg,rgba(10,42,74,.98),rgba(10,42,74,0) 36%)"></div></div>'+
+    '<div class="cv" style="top:16px;font-size:4.2px;line-height:1.7;color:rgba(255,255,255,.82);width:74px">Built only from the sample you choose, then reviewed by you before anything is sent.</div>'+
+    '<div style="position:absolute;right:10px;top:16px;font-size:5.4px;font-weight:600;color:#fff;opacity:.92">✳ Roast</div>';
+  case 'frete': return ''+
+    '<div class="fill" style="background:linear-gradient(158deg,#4a0c80 0%,#7a16a6 40%,#a81fc6 66%,#5c0e90 100%)"></div>'+
+    '<div class="ph" style="top:140px;bottom:0;opacity:.45;mix-blend-mode:screen">'+im+'</div>'+
+    '<div class="fill" style="background:radial-gradient(44% 16% at 50% 62%, rgba(255,255,255,.92), rgba(255,255,255,0) 72%)"></div>'+
+    '<div style="position:absolute;left:-6px;right:-6px;top:44px;height:13px;background:#ff2d8a;transform:rotate(-2.6deg);box-shadow:0 4px 12px rgba(255,45,138,.5)"></div>'+
+    '<div style="position:absolute;left:0;right:0;top:45.5px;transform:rotate(-2.6deg);text-align:center;font-size:5.6px;font-weight:700;letter-spacing:.05em;color:#fff">PRIVATE BY DEFAULT AND</div>'+
+    '<div class="cv t-big" style="top:64px;font-size:24px;color:#fff;text-shadow:0 3px 0 rgba(84,9,124,.6)">Gone</div>'+
+    '<div class="cv t-big" style="top:87px;font-size:24px;color:#fff;text-shadow:0 3px 0 rgba(84,9,124,.6)">In 24h</div>'+
+    '<div class="cv t-big" style="top:113px;font-size:19px;color:#fff">+ delete</div>';
+  case 'power': return ''+
+    '<div class="ph phf">'+im+'</div>'+
+    '<div class="fill" style="background:linear-gradient(180deg,rgba(6,5,10,0) 34%,rgba(6,5,10,.55) 52%,rgba(6,5,10,.92) 72%)"></div>'+
+    '<div class="cv t-serif" style="top:132px;font-size:16px;color:#fff">SAVAGE?</div>'+
+    '<div class="cv t-serif" style="top:150px;font-size:16px;color:#fff">STILL SAFE.</div>'+
+    '<div class="cv" style="top:171px;font-size:4.4px;letter-spacing:.07em;color:rgba(255,255,255,.85)">stronger jokes, same safety rules</div>';
+  case 'off': return ''+
+    '<div class="ph phf">'+im+'</div>'+
+    '<div class="fill" style="background:linear-gradient(180deg,rgba(3,9,20,0) 30%,rgba(3,9,20,.6) 48%,rgba(3,9,20,.95) 70%)"></div>'+
+    '<div class="cv t-big" style="top:126px;font-size:10px;color:#fff;opacity:.9">Your roast, ready in</div>'+
+    '<div class="cv t-big" style="top:139px;font-size:22px;color:#3fe3ff;text-shadow:0 0 16px rgba(63,227,255,.5)">Seconds</div>';
+  default: return ''+
+    '<div class="ph phf">'+im+'</div>'+
+    '<div class="fill" style="background:linear-gradient(180deg,rgba(4,8,16,0) 38%,rgba(4,8,16,.85) 68%)"></div>'+
+    '<div class="cv" style="top:150px;font-size:5.4px;font-weight:600;letter-spacing:.2em;color:#fff">'+d.t+'</div>';
+  }
+}
+
+/* ---------------- the ring ----------------
+   37 cards on a cylinder of radius R=891 whose camera (perspective=891, origin y=918)
+   sits AT the ring centre, so each card is tangent to the cylinder and faces the camera.
+   Step = 360/37 deg. Cards beyond +/-42 deg are culled (back half is never visible),
+   leaving ~8-9 live cards. Slanted card tops are perspective, not rotation. */
+var R=891, N=37, STEP=360/N, CULL=42, SPEED=1.9;
+var phase=-2, lastT=0;
+var cards=[], hidden=[];
+(function build(){
+  var frag=document.createDocumentFragment();
+  for(var i=0;i<N;i++){
+    var c=document.createElement('div');
+    c.className='card';
+    c.innerHTML=creative(SHOTS[i%SHOTS.length])+'<div class="edge"></div>';
+    $$('img',c).forEach(function(img){
+      img.addEventListener('error',function(){c.classList.add('broken');});
+    });
+    frag.appendChild(c); cards.push(c); hidden.push(null);
+  }
+  ringEl.appendChild(frag);
+})();
+function placeCards(){
+  for(var i=0;i<N;i++){
+    var a=(((i*STEP+phase)%360)+540)%360-180;      // signed angle -180..180
+    var el=cards[i];
+    if(Math.abs(a)>CULL){
+      if(hidden[i]!==true){el.style.visibility='hidden';hidden[i]=true;}
+      continue;
+    }
+    if(hidden[i]!==false){el.style.visibility='visible';hidden[i]=false;}
+    var r=a*Math.PI/180, c=Math.cos(r);
+    el.style.transform='translate3d('+(R*Math.sin(r)).toFixed(2)+'px,0,'+(R*(1-c)).toFixed(2)+'px) rotateY('+(-a).toFixed(3)+'deg)';
+    el.style.filter='brightness('+(0.84+0.5*(1/c-1)).toFixed(3)+')';   // edges dim, front bright
+  }
+}
+function tick(t){
+  var dt=Math.min((t-(lastT||t))/1000,.1);
+  lastT=t;
+  if(!reduced.matches) phase-=SPEED*dt;            // continuous, never resets
+  placeCards();
+  requestAnimationFrame(tick);
+}
+document.addEventListener('visibilitychange',function(){lastT=0;});   // no jump after a backgrounded tab
+
+/* ---------------- type fitter ---------------- */
+var cvs=document.createElement('canvas').getContext('2d');
+function fontOf(el){
+  var cs=getComputedStyle(el);
+  return {css:cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily,size:parseFloat(cs.fontSize),
+          weight:cs.fontWeight,family:cs.fontFamily};
+}
+function inkWidth(el){return el.getBoundingClientRect().width/(mobile?1:k);}
+function capRatio(el){                                  // cap height per 1px of font-size
+  var f=fontOf(el); cvs.font=f.weight+' 100px '+f.family;
+  return (cvs.measureText('H').actualBoundingBoxAscent||70)/100;
+}
+function fitBox(el,tw,tc,pre){                          // exact cap height AND exact ink width
+  el.style.transform=pre||'';
+  el.style.fontSize=(tc/capRatio(el))+'px';
+  var w=inkWidth(el);
+  el.style.transform=(pre?pre+' ':'')+'scaleX('+(tw/w)+')';
+}
+function baseline(el,y){
+  var f=fontOf(el); cvs.font=f.weight+' '+f.size+'px '+f.family;
+  var m=cvs.measureText('H');
+  var A=m.fontBoundingBoxAscent||f.size*.8, D=m.fontBoundingBoxDescent||f.size*.2;
+  el.style.top=(y-((f.size-(A+D))/2+A))+'px';
+}
+function centreLabel(btn,el,capPx){
+  el.style.top='';
+  var p=document.createElement('i'); p.style.cssText='display:inline-block;width:0;height:0';
+  el.appendChild(p);
+  var base=(p.getBoundingClientRect().top-btn.getBoundingClientRect().top)/k;
+  el.removeChild(p);
+  var h=parseFloat(getComputedStyle(btn).height);
+  el.style.top=((h/2)-(base-capPx/2)+BIAS)+'px';
+}
+
+var h1a=$('#h1a'),h1b=$('#h1b'),sub1=$('#sub1'),sub2=$('#sub2'),badgeTxt=$('#badgeTxt'),
+    wmName=$('#wmName'),ctaLabel=$('#ctaLabel'),vpLabel=$('#vpLabel'),links=$('#links'),
+    linkKids=$$('a',links);
+
+function layout(){
+  var all=[h1a,h1b,sub1,sub2,badgeTxt,wmName,ctaLabel,vpLabel];
+  if(mobile){
+    // hand EVERY inline style the fitter wrote back (a stale transform would shift the headline off-screen)
+    all.forEach(function(e){e.style.fontSize='';e.style.top='';e.style.transform='';});
+    links.style.fontSize='';links.style.transform='';
+    linkKids.forEach(function(a){a.style.fontSize='';});
+    placeCards();
+    return;
+  }
+  var T=tablet?tboost:1;
+  fitBox(h1a,563.5*T,37.2*T,'translateX(-50%)'); baseline(h1a,204.5);
+  fitBox(h1b,197.5*T,37.2*T,'translateX(-50%)'); baseline(h1b,258.5);
+  fitBox(sub1,389*T,8.4*T,'translateX(-50%)');   baseline(sub1,300.5);
+  fitBox(sub2,311*T,8.4*T,'translateX(-50%)');   baseline(sub2,316.5);
+  fitBox(badgeTxt,184*T,9.4*T,'translate(2px,-1px)');
+  fitBox(wmName,51*T,11.4*T);                    baseline(wmName,38.5);
+  fitBox(ctaLabel,87*T,8.9*T);  centreLabel(ctaLabel.parentNode,ctaLabel,8.9*T);
+  fitBox(vpLabel,76*T,9.5*T);   centreLabel(vpLabel.parentNode,vpLabel,9.5*T);
+
+  links.style.transform='';
+  if(tablet){
+    linkKids.forEach(function(a){a.style.fontSize='';});
+  }else{
+    var fs=7.9/capRatio(linkKids[0]);               // one shared size across all five links
+    linkKids.forEach(function(a){a.style.fontSize=fs+'px';});
+    var rw=links.getBoundingClientRect().width/k;
+    links.style.transform='scaleX('+(317/rw)+')';   // squeeze the row to the 317px reference
+  }
+  placeCards();
+}
+
+/* ---------------- scale law ----------------
+   k = min(vw / W, vh / 560). Dividing height by 560 (not 657) is deliberate: it fills the
+   width and lets the browser mock bleed off the bottom instead of letterboxing.
+   Desktop: W = 1172. Tablet: the design WINDOW narrows linearly (920 at 701px -> 1172 at
+   1080px) so type stops shrinking with the viewport, and k is continuous at 1080. */
+function resize(){
+  var vw=document.documentElement.clientWidth||innerWidth, vh=innerHeight;
+  mobile=vw<=PH_MAX; tablet=!mobile&&vw<=TAB_MAX;
+  var props=['--k','--fill','--stshift','--sshift','--rs'];
+  if(mobile){
+    k=1; tboost=1;
+    props.forEach(function(p){canvas.style.removeProperty(p);});
+    closeMenuIfOutside(); layout(); return;
+  }
+  var W=CW;
+  var ramp=Math.max(0,Math.min(1,(TAB_MAX-vw)/120));   // eases the architecture change in over 120px
+  if(tablet){
+    W=DW_MIN+(vw-TAB_MIN)*(CW-DW_MIN)/(TAB_MAX-TAB_MIN);
+    // portrait tablet: tighten the window so type reads larger (blended by ramp -> continuous at 1080)
+    if(vh>vw*1.15) W+=(Math.min(W,900)-W)*ramp;
+  }
+  k=Math.min(vw/W,vh/560);
+  tboost=1+0.14*ramp;                                   // ink-target multiplier for type
+  var fill=Math.max(0,vh/k-CH), ss=0, rs=1, st=0;
+  if(tablet&&fill>0){                                   // share surplus height THREE ways
+    ss=Math.min(fill*0.55,420)*ramp;                    // 1) wheel + mock travel toward the foot
+    rs=1+Math.min(fill/1100,0.75)*ramp;                 // 2) wheel grows = a closer camera
+    var slack=219.5-125*rs+ss;
+    st=Math.max(0,slack/2-28)*ramp;                     // 3) hero drops to sit optically centred
+    fill-=ss;                                           //    mock keeps only what is left
+  }
+  canvas.style.setProperty('--k',k);
+  canvas.style.setProperty('--fill',fill+'px');
+  canvas.style.setProperty('--stshift',st+'px');
+  canvas.style.setProperty('--sshift',ss+'px');
+  canvas.style.setProperty('--rs',rs);
+  closeMenuIfOutside();
+  layout();
+}
+
+/* ---------------- menu ---------------- */
+var burger=$('.burger',nav);
+function setMenu(open){
+  nav.classList.toggle('open',open);
+  burger.setAttribute('aria-expanded',open?'true':'false');
+}
+function closeMenuIfOutside(){
+  if(document.documentElement.clientWidth>TAB_MAX) setMenu(false);   // force-close when leaving the band
+}
+burger.addEventListener('click',function(e){e.stopPropagation();setMenu(!nav.classList.contains('open'));});
+document.addEventListener('click',function(e){
+  if(nav.classList.contains('open')&&!nav.contains(e.target)) setMenu(false);
+});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'&&nav.classList.contains('open')){setMenu(false);burger.focus();}
+});
+$('#navmenu').addEventListener('click',function(e){
+  if(e.target.closest('a')) setMenu(false);
+});
+
+/* ---------------- image failure handling ----------------
+   A failed ring image adds .broken to its card (the CSS gradient placeholder shows through);
+   any other failed image is simply hidden so no broken-image icon or alt text ever paints.
+   Capture phase catches errors that fire before/after per-node listeners are attached. */
+function failImg(img){
+  var card=img.closest('.card');
+  if(card) card.classList.add('broken'); else img.style.visibility='hidden';
+}
+document.addEventListener('error',function(e){
+  if(e.target&&e.target.tagName==='IMG') failImg(e.target);
+},true);
+$$('img').forEach(function(img){ if(img.complete&&!img.naturalWidth) failImg(img); });
+
+/* ---------------- wiring ---------------- */
+addEventListener('resize',resize);
+if(window.visualViewport) visualViewport.addEventListener('resize',resize);
+resize();
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(layout);
+setTimeout(layout,400);
+setTimeout(layout,1400);
+document.addEventListener('rmf:settled',layout);     // re-measure once the entrance's transforms are gone
+requestAnimationFrame(tick);
+})();
+</script>
+
+<script>
+/* ---------------- 12. master entrance timeline: runs once, then the page is still ----------------
+   Uses the individual translate/scale/clip-path properties (not `transform`) because `transform`
+   is owned by the pixel fitter and the ring loop; these compose instead of colliding. The
+   background never moves. */
+(function(){
+  var root=document.documentElement;
+  var n=0,last=null,lastEnd=-1;
+  function settle(){
+    document.getAnimations().forEach(function(a){
+      if(String(a.id).indexOf('intro:')===0) a.cancel();
+    });
+    root.classList.remove('intro');
+    document.dispatchEvent(new Event('rmf:settled'));
+  }
+  if(!root.classList.contains('intro')||
+     window.matchMedia('(prefers-reduced-motion: reduce)').matches||
+     !Element.prototype.animate){ settle(); return; }
+
+  var D=innerWidth<=700?.66:1;
+  var EXPO='cubic-bezier(.16,1,.3,1)', SOFT='cubic-bezier(.22,.61,.36,1)';
+  function Y(px){return '0 '+(px*D)+'px';}
+  function play(el,from,dur,delay,ease){
+    if(!el) return;
+    var to={opacity:1};
+    if('translate' in from) to.translate='0 0';
+    if('scale' in from) to.scale='1';
+    if('clipPath' in from) to.clipPath='inset(-30% 0 -30% 0)';
+    var a=el.animate([from,to],{duration:dur,delay:delay,easing:ease,fill:'both'});
+    a.id='intro:'+(n++);
+    if(delay+dur>lastEnd){lastEnd=delay+dur;last=a;}
+  }
+  var q=function(s){return document.querySelector(s)};
+  // the frame settles
+  play(q('.nav'),{opacity:0,translate:Y(-9)},620,60,EXPO);
+  play(q('.mark'),{opacity:0,translate:Y(6)},520,150,SOFT);
+  play(q('.wm'),{opacity:0,translate:Y(6)},520,185,SOFT);
+  Array.prototype.forEach.call(document.querySelectorAll('.links a'),function(a,i){
+    play(a,{opacity:0,translate:Y(6)},460,215+i*45,SOFT);
+  });
+  play(q('.burger'),{opacity:0,translate:Y(6)},460,300,SOFT);
+  play(q('.nav .btn'),{opacity:0,translate:Y(6)},500,400,SOFT);
+  // context, then the message
+  play(q('.badge'),{opacity:0,translate:Y(11),scale:.985},560,270,EXPO);
+  play(q('#h1a'),{opacity:0,translate:Y(15),clipPath:'inset(100% 0 -30% 0)'},900,380,EXPO);
+  play(q('#h1b'),{opacity:0,translate:Y(15),clipPath:'inset(100% 0 -30% 0)'},900,470,EXPO);
+  play(q('#sub1'),{opacity:0,translate:Y(10)},620,690,EXPO);
+  play(q('#sub2'),{opacity:0,translate:Y(10)},620,745,EXPO);
+  play(q('.cta2'),{opacity:0,translate:Y(13),scale:.985},620,830,EXPO);
+  // the payoff: the wheel rises into depth, the mock lands in FRONT of it last
+  play(q('.ring'),{opacity:0,translate:Y(18),scale:.99},950,700,EXPO);
+  play(q('.browser'),{opacity:0,translate:Y(26)},900,900,EXPO);
+  play(q('.wa'),{opacity:0,scale:.88},500,1260,EXPO);
+  play(q('.legal'),{opacity:0},500,1300,SOFT);
+
+  if(last){ last.finished.then(settle,settle); } else { settle(); }
+})();
+</script>
+</body>
+</html>

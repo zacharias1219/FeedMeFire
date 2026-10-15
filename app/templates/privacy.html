@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Privacy{% endblock %}
+{% block content %}
+<section class="prose">
+  <h1>Privacy</h1>
+  <p class="lede">You choose the input. We send only your selected text to our AI provider. Your report is private and expires automatically.</p>
+  <p class="meta">Policy version {{ s.policy_version }} · Provider disclosure version {{ s.provider_disclosure_version }}</p>
+
+  <h2>What we handle</h2>
+  <ul>
+    <li><strong>The sample you type</strong> (titles, channels, interests) and <strong>the report</strong> generated from it. Both are encrypted in our database.</li>
+    <li><strong>Your consent choices</strong> with timestamps and the policy versions you accepted.</li>
+    <li><strong>Optional feedback</strong>, stored separately from your report.</li>
+    <li><strong>A session cookie</strong> (one, strictly necessary, HttpOnly). No accounts, no email, no device fingerprinting.</li>
+    <li><strong>Operational data</strong>: request logs without any sample or report text, a salted hash of your network address for rate limiting (kept about 2 days, never the address itself), and anonymous event counts.</li>
+  </ul>
+  <h2>What we do not do</h2>
+  <ul>
+    <li>We never access your YouTube account or watch history, and we never open links you paste.</li>
+    <li>No advertising trackers. No selling or sharing data for advertising.</li>
+    <li>We don't use your sample, reports or feedback to train AI models.</li>
+    <li>Prompts and outputs are never sent to error trackers or analytics.</li>
+  </ul>
+
+  <h2>The AI provider</h2>
+  <p>Your approved sample is sent to: <strong>{{ provider }}</strong>.
+  {% if s.provider == "gemini" %}
+    The provider processes it under its own terms; how long it retains data on its side is governed by those terms and is separate from our retention below. See the <a href="https://ai.google.dev/gemini-api/terms" rel="noopener noreferrer">Gemini API terms</a>.
+  {% else %}
+    In this configuration text is generated on our own server and nothing is sent to a third party.
+  {% endif %}
+  Only item IDs, item types, the text you selected, your chosen intensity and the output format go to the provider. No cookies, IP addresses or other identifiers do.</p>
+
+  <h2>How long we keep things</h2>
+  <table class="plain">
+    <thead><tr><th>Data</th><th>Kept</th></tr></thead>
+    <tbody>
+      <tr><td>Your sample and report</td><td>Until you delete them, or {{ s.report_ttl_hours }} hours after creation</td></tr>
+      <tr><td>Queued work</td><td>Same as the sample</td></tr>
+      <tr><td>Feedback text</td><td>Up to {{ s.feedback_ttl_days }} days, unless you delete it sooner</td></tr>
+      <tr><td>Operational logs (no content)</td><td>{{ s.log_ttl_days }} days</td></tr>
+      <tr><td>Anonymous aggregate metrics</td><td>{{ s.metrics_ttl_days }} days</td></tr>
+      <tr><td>Encrypted backups</td><td>At most 7 days</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Deleting your data</h2>
+  <p>Use <em>Delete my data</em> on your results page at any time. Access stops immediately and your active data is removed within about a minute. Backups age out within 7 days, and we keep a record that a deletion happened (never what it contained) so deleted data can't reappear after a restore. We can't recall images you already downloaded.</p>
+
+  <h2>Age</h2>
+  <p>You must confirm you are at least 16 to use RoastMyFeed. This is a checkbox, not verified age assurance.</p>
+
+  <h2>Contact</h2>
+  <p>Questions or requests: <a href="mailto:{{ s.support_contact }}">{{ s.support_contact }}</a>.</p>
+</section>
+{% endblock %}

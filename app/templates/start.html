@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Roast my taste{% endblock %}
+{% block robots %}noindex{% endblock %}
+{% block bodyclass %}app{% endblock %}
+{% block content %}
+<div class="app-wrap">
+  <div id="live" class="sr-only" role="status" aria-live="polite"></div>
+  <noscript><p class="notice">RoastMyFeed needs JavaScript to build your sample and report.</p></noscript>
+
+  <ol class="progress" id="progress" aria-label="Progress">
+    <li data-step="input">Sample</li><li data-step="review">Review</li><li data-step="prefs">Approve</li><li data-step="generating">Generate</li><li data-step="results">Result</li>
+  </ol>
+
+  <!-- 0. gate -->
+  <section id="step-gate" class="panel" hidden aria-labelledby="gate-h">
+    <h1 id="gate-h" tabindex="-1">Before we start</h1>
+    <p id="gate-expired" class="notice" hidden>Your session ended. Start a new one to continue.</p>
+    <p>RoastMyFeed turns a sample <em>you</em> choose into a funny, private roast. It never sees your watch history.</p>
+    <label class="check"><input type="checkbox" id="chk-age"><span>I am at least 16 years old.</span></label>
+    <label class="check"><input type="checkbox" id="chk-terms"><span>I have read and accept the <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a> and <a href="/terms" target="_blank" rel="noopener">Terms</a>.</span></label>
+    <p class="err" id="gate-err" role="alert" hidden></p>
+    <div class="row"><button class="btn-glow" id="gate-go" disabled><span>Continue</span></button></div>
+  </section>
+
+  <!-- 1. input -->
+  <section id="step-input" class="panel" hidden aria-labelledby="input-h">
+    <h1 id="input-h" tabindex="-1">Build your sample</h1>
+    <p>Add at least <strong data-bind="min">10</strong> video titles, channel names or interests that are really yours. Type titles and names, not links: we never open links.</p>
+    <p class="warn"><strong>Don't include personal information</strong> (names, emails, phone numbers) or anything you'd rather keep private.</p>
+    <form id="add-form" class="stack" novalidate>
+      <div class="field-row">
+        <label for="add-type">Type</label>
+        <select id="add-type"><option value="video_title">Video title</option><option value="channel_name">Channel name</option><option value="interest">Interest</option></select>
+      </div>
+      <div class="field-row grow">
+        <label for="add-text">One item (3–200 characters)</label>
+        <input id="add-text" maxlength="200" autocomplete="off" placeholder="e.g. Beginner's guide to sourdough">
+      </div>
+      <button class="btn-ghost" type="submit">Add</button>
+    </form>
+    <details class="bulk"><summary>Paste many at once</summary>
+      <label for="bulk-text">One item per line (uses the type selected above)</label>
+      <textarea id="bulk-text" rows="6" placeholder="Slow living vlogs&#10;Desk setup tours&#10;Notion templates"></textarea>
+      <button class="btn-ghost" id="bulk-add" type="button">Add all lines</button>
+    </details>
+    <p class="hint" id="suggest">Tip: mix types. A few videos, a few channels and a few interests give the funniest contradictions.</p>
+    <p id="input-count" class="count" aria-live="polite"></p>
+    <p class="err" id="input-err" role="alert" hidden></p>
+    <ul class="chips" id="chips" aria-label="Items added so far"></ul>
+    <div class="row">
+      <button class="btn-ghost" id="use-demo" type="button">Use the fictional demo sample</button>
+      <button class="btn-glow" id="to-review" type="button" disabled><span>Review sample</span></button>
+    </div>
+  </section>
+
+  <!-- 2. review -->
+  <section id="step-review" class="panel" hidden aria-labelledby="review-h">
+    <h1 id="review-h" tabindex="-1">Review exactly what gets analyzed</h1>
+    <p id="review-summary" class="count" aria-live="polite"></p>
+    <p class="hint">Edit any item or remove it. Items flagged as sensitive are never sent. This screening is best-effort and can miss things, so please check the list yourself.</p>
+    <p class="err" id="review-err" role="alert" hidden></p>
+    <ul class="items" id="items"></ul>
+    <div class="row"><button class="btn-ghost" id="clear-all" type="button">Remove all</button><button class="btn-ghost" id="back-input" type="button">Add more</button></div>
+    <h2>Sent to the AI provider (<span id="bound-count">0</span>)</h2>
+    <p class="hint" id="bound-note"></p>
+    <ol class="bound" id="bound"></ol>
+    <div class="row"><button class="btn-glow" id="approve" type="button" disabled><span>Approve this sample</span></button></div>
+  </section>
+
+  <!-- 3. prefs -->
+  <section id="step-prefs" class="panel" hidden aria-labelledby="prefs-h">
+    <h1 id="prefs-h" tabindex="-1">Choose your intensity</h1>
+    <fieldset class="intensity"><legend class="sr-only">Roast intensity</legend>
+      <label class="radio"><input type="radio" name="intensity" value="gentle"><span><b>Gentle</b>Affectionate teasing. No profanity.</span></label>
+      <label class="radio"><input type="radio" name="intensity" value="spicy" checked><span><b>Spicy</b>Sharper jokes and contradictions. No profanity.</span></label>
+      <label class="radio"><input type="radio" name="intensity" value="savage"><span><b>Savage</b>Stronger exaggeration. Same safety rules, always.</span></label>
+    </fieldset>
+    <h2>Your consent</h2>
+    <label class="check"><input type="checkbox" id="c-own"><span>The items I approved are my own taste and interests.</span></label>
+    <label class="check"><input type="checkbox" id="c-provider"><span>I allow RoastMyFeed to send the selected text shown on the previous screen to <strong data-bind="provider"></strong> to generate my roast. <a href="/privacy" target="_blank" rel="noopener">How it's handled</a>.</span></label>
+    <label class="check"><input type="checkbox" id="c-fun"><span>I understand the result is AI-generated entertainment, not a psychological assessment or a record of my real viewing history.</span></label>
+    <p class="err" id="prefs-err" role="alert" hidden></p>
+    <div class="row"><button class="btn-ghost" id="back-review" type="button">Back</button><button class="btn-glow" id="start" type="button" disabled><span>Roast me</span></button></div>
+  </section>
+
+  <!-- 4. generating -->
+  <section id="step-generating" class="panel" hidden aria-labelledby="gen-h">
+    <h1 id="gen-h" tabindex="-1">Writing your roast</h1>
+    <ol class="stages" id="stages">
+      <li data-s="queued">Waiting in line</li><li data-s="validating">Checking your approved sample</li><li data-s="generating">Writing your roast</li><li data-s="checking">Running safety and grounding checks</li>
+    </ol>
+    <p class="hint">This usually takes under a minute. We show real stages, not a fake progress bar.</p>
+    <div class="row"><button class="btn-ghost" id="cancel" type="button">Cancel</button></div>
+  </section>
+
+  <!-- 5. results -->
+  <section id="step-results" hidden aria-labelledby="res-h">
+    <div class="panel hero-result"><p class="eyebrow" id="res-intensity"></p><h1 id="res-h" tabindex="-1"></h1><p class="persona" id="res-persona"></p><p class="persona-note" id="res-persona-note"></p></div>
+    <div id="report-body"></div>
+    <div class="panel" id="share-panel" aria-labelledby="share-h">
+      <h2 id="share-h">Share card</h2>
+      <p class="hint">The card shows only your persona and one quote. It never includes your source items.</p>
+      <label for="quote-pick">Quote on the card</label><select id="quote-pick"></select>
+      <canvas id="card" width="1080" height="1350" role="img" aria-label="Preview of your share card"></canvas>
+      <p class="err" id="card-err" role="alert" hidden></p>
+      <div class="row"><button class="btn-glow" id="download" type="button"><span>Download image</span></button></div>
+    </div>
+    <div class="panel" id="regen-panel" hidden>
+      <h2>Try a different intensity</h2>
+      <p class="hint">One regeneration per report. It uses the same approved sample and counts toward your session limit (<span id="attempts-left"></span> left). Your current report stays until the new one is ready.</p>
+      <div class="row"><label for="regen-int" class="sr-only">New intensity</label><select id="regen-int"></select><button class="btn-ghost" id="regen" type="button">Regenerate</button></div>
+      <p class="err" id="regen-err" role="alert" hidden></p>
+    </div>
+    <div class="panel" id="feedback-panel">
+      <h2>How was it?</h2>
+      <form id="fb-form" class="fb">
+        <fieldset><legend>Funny?</legend><label><input type="radio" name="funny" value="1"> Funny</label><label><input type="radio" name="funny" value="0"> Not funny</label></fieldset>
+        <fieldset><legend>Specific?</legend><label><input type="radio" name="specific" value="1"> Specific</label><label><input type="radio" name="specific" value="0"> Generic</label></fieldset>
+        <fieldset><legend>Harshness</legend><label><input type="radio" name="harsh" value="1"> Too harsh</label><label><input type="radio" name="harsh" value="0"> Appropriate</label></fieldset>
+        <label for="fb-comment">Optional comment (500 characters max)</label>
+        <textarea id="fb-comment" maxlength="500" rows="3"></textarea>
+        <p class="hint">Feedback, including any comment, is kept separately from your report for up to <span data-bind="feedback_days">30</span> days unless you delete your data sooner. It is not used to train models.</p>
+        <p class="ok" id="fb-ok" role="status" hidden></p><p class="err" id="fb-err" role="alert" hidden></p>
+        <button class="btn-ghost" type="submit">Send feedback</button>
+      </form>
+    </div>
+    <div class="panel limits"><h2>Limitations</h2>
+      <p id="res-disclaimer"></p>
+      <p>Your report expires <span id="res-expires"></span>. Downloaded images can't be remotely removed.</p>
+      <div class="row"><button class="btn-ghost" id="delete" type="button">Delete my data</button><button class="btn-ghost" id="again" type="button">Start a new sample</button></div>
+    </div>
+  </section>
+
+  <!-- error + deleted -->
+  <section id="step-error" class="panel" hidden aria-labelledby="err-h">
+    <h1 id="err-h" tabindex="-1">That didn't work</h1>
+    <p id="err-msg"></p>
+    <div class="row"><button class="btn-glow" id="err-retry" type="button"><span>Try again</span></button><button class="btn-ghost" id="err-back" type="button">Back to my sample</button></div>
+  </section>
+  <section id="step-deleted" class="panel" hidden aria-labelledby="del-h">
+    <h1 id="del-h" tabindex="-1">Your data is deleted</h1>
+    <p>Your samples, reports, queued work and feedback are gone and your session has ended. Images you already downloaded can't be removed remotely.</p>
+    <div class="row"><a class="btn-ghost" href="/">Back home</a></div>
+  </section>
+
+  <dialog id="confirm-delete" aria-labelledby="cd-h">
+    <form method="dialog">
+      <h2 id="cd-h">Delete everything?</h2>
+      <p>This removes your sample, report, any queued roast and your feedback, and ends your session. It can't be undone.</p>
+      <div class="row"><button class="btn-ghost" value="cancel">Keep it</button><button class="btn-danger" value="confirm">Delete my data</button></div>
+    </form>
+  </dialog>
+</div>
+{% endblock %}
+{% block scripts %}<script type="module" src="/static/js/app.js"></script>{% endblock %}

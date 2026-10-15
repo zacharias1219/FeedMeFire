@@ -1,0 +1,145 @@
+{
+ "intensity": "spicy",
+ "items": [
+  "I Organised My Entire Life in Notion (Part 4)",
+  "Minimalist Desk Setup Tour 2026",
+  "How to Start Waking Up at 5AM (Again)",
+  "Beginner's Guide to Sourdough",
+  "Ultimate Guide to a Productive Morning Routine",
+  "Learn Piano in 30 Days",
+  "The Perfect Productivity System",
+  "Desk Setup Daily",
+  "Slow Living Studio",
+  "Notion Nerd Hour",
+  "The Sourdough Society",
+  "digital minimalism",
+  "buying more mechanical keyboards",
+  "starting a new hobby on Monday",
+  "productivity apps"
+ ],
+ "report": {
+  "schema_version": "1.0",
+  "headline": "Your tutorial queue has become a lifestyle",
+  "persona": {
+   "label": "The Tutorial Collector",
+   "description": "A fictional viewing persona, not a personality assessment."
+  },
+  "opening_roast": "You keep collecting fresh starts in video form. Fifteen items in, one theme is loud and clear: you are always about to begin, and the preparation is the hobby.",
+  "observations": [
+   {
+    "title": "Preparation is the hobby",
+    "joke": "Your sample has more beginner guides than beginnings. Sourdough and piano are both waiting patiently for a Monday that keeps moving.",
+    "evidence_item_ids": [
+     "item_04",
+     "item_06"
+    ]
+   },
+   {
+    "title": "Four parts of organising",
+    "joke": "Part 4 of organising your entire life suggests the system is working beautifully, as long as the goal is making more system.",
+    "evidence_item_ids": [
+     "item_01",
+     "item_07"
+    ]
+   },
+   {
+    "title": "A very committed morning",
+    "joke": "Starting to wake up at 5AM again is the sort of resolve that gets its own rewatch, probably around 9:30.",
+    "evidence_item_ids": [
+     "item_03",
+     "item_05"
+    ]
+   },
+   {
+    "title": "The keyboard situation",
+    "joke": "Buying more mechanical keyboards while following three desk-setup creators is less an interest and more a sincere commitment to rectangles.",
+    "evidence_item_ids": [
+     "item_13",
+     "item_08",
+     "item_02"
+    ]
+   },
+   {
+    "title": "Slow living, fast scrolling",
+    "joke": "Slow Living Studio and a Notion nerd hour in the same queue: calm vibes, forty tabs.",
+    "evidence_item_ids": [
+     "item_09",
+     "item_10"
+    ]
+   }
+  ],
+  "contradictions": [
+   {
+    "joke": "You picked digital minimalism and a minimalist desk tour, then bought the keyboards. The desk is fine. The desk was always fine.",
+    "evidence_item_ids": [
+     "item_12",
+     "item_02"
+    ]
+   },
+   {
+    "joke": "Productivity apps and a perfect productivity system, yet the most productive thing in the sample might be the queue itself.",
+    "evidence_item_ids": [
+     "item_15",
+     "item_07"
+    ]
+   }
+  ],
+  "affectionate_closer": "At least your curiosity has excellent stamina.",
+  "share_quote": "My tutorial queue has become a lifestyle.",
+  "disclaimer": "AI-generated entertainment based only on the sample you selected. Not a psychological assessment or a record of your actual viewing history."
+ },
+ "evidence": {
+  "item_01": {
+   "item_type": "video_title",
+   "text": "I Organised My Entire Life in Notion (Part 4)"
+  },
+  "item_02": {
+   "item_type": "video_title",
+   "text": "Minimalist Desk Setup Tour 2026"
+  },
+  "item_03": {
+   "item_type": "video_title",
+   "text": "How to Start Waking Up at 5AM (Again)"
+  },
+  "item_04": {
+   "item_type": "video_title",
+   "text": "Beginner's Guide to Sourdough"
+  },
+  "item_05": {
+   "item_type": "video_title",
+   "text": "Ultimate Guide to a Productive Morning Routine"
+  },
+  "item_06": {
+   "item_type": "video_title",
+   "text": "Learn Piano in 30 Days"
+  },
+  "item_07": {
+   "item_type": "video_title",
+   "text": "The Perfect Productivity System"
+  },
+  "item_08": {
+   "item_type": "channel_name",
+   "text": "Desk Setup Daily"
+  },
+  "item_09": {
+   "item_type": "channel_name",
+   "text": "Slow Living Studio"
+  },
+  "item_10": {
+   "item_type": "channel_name",
+   "text": "Notion Nerd Hour"
+  },
+  "item_12": {
+   "item_type": "interest",
+   "text": "digital minimalism"
+  },
+  "item_13": {
+   "item_type": "interest",
+   "text": "buying more mechanical keyboards"
+  },
+  "item_15": {
+   "item_type": "interest",
+   "text": "productivity apps"
+  }
+ }
+}

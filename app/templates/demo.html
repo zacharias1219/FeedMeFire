@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Demo{% endblock %}
+{% block bodyclass %}app{% endblock %}
+{% block content %}
+<div class="app-wrap">
+  <div class="panel notice-panel"><p class="eyebrow">Demo</p><h1>A fictional example</h1>
+    <p>This sample and roast are made up and were written ahead of time. No AI call is made and nothing is stored. Want your own? It takes about three minutes.</p>
+    <div class="row"><a class="btn-glow" href="/start"><span>Roast my own taste</span></a></div></div>
+  <div class="panel"><h2>The fictional sample</h2><ul class="chips" id="demo-items"></ul></div>
+  <section aria-labelledby="res-h"><div class="panel hero-result"><p class="eyebrow" id="res-intensity"></p><h2 class="h1like" id="res-h"></h2><p class="persona" id="res-persona"></p><p class="persona-note" id="res-persona-note"></p></div>
+    <div id="report-body"></div></section>
+  <div class="panel" id="share-panel"><h2>Share card</h2><label for="quote-pick">Quote on the card</label><select id="quote-pick"></select>
+    <canvas id="card" width="1080" height="1350" role="img" aria-label="Preview of the demo share card"></canvas>
+    <p class="err" id="card-err" role="alert" hidden></p>
+    <div class="row"><button class="btn-glow" id="download" type="button"><span>Download image</span></button></div></div>
+  <div class="panel"><p id="res-disclaimer"></p><div class="row"><a class="btn-glow" href="/start"><span>Roast my own taste</span></a></div></div>
+</div>
+{% endblock %}
+{% block scripts %}<script type="module" src="/static/js/demo.js"></script>{% endblock %}

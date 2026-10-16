@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en-US">
+<head>
+<meta charset="utf-8">
+<title>{% block title %}RoastMyFeed{% endblock %} — RoastMyFeed</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#020204">
+<meta name="robots" content="{% block robots %}index,follow{% endblock %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="{% block bodyclass %}{% endblock %}">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+  <a class="brand" href="/" aria-label="RoastMyFeed home"><span class="brand-mark" aria-hidden="true"></span><span>Roast<b>MyFeed</b></span></a>
+  <nav aria-label="Primary">
+    <a href="/how-it-works">How it works</a>
+    <a href="/safety">Safety</a>
+    <a href="/privacy">Privacy</a>
+    <a class="btn-ghost sm" href="/demo">Demo</a>
+  </nav>
+</header>
+<main id="main" tabindex="-1">{% block content %}{% endblock %}</main>
+<footer class="site-foot">
+  <nav aria-label="Legal"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/support">Support</a><a href="/safety">Safety</a></nav>
+  <p>RoastMyFeed is independent entertainment. It does not access anyone's watch history and is not affiliated with or endorsed by YouTube.</p>
+</footer>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Terms{% endblock %}
+{% block content %}
+<section class="prose">
+  <h1>Terms of use</h1>
+  <p class="meta">Version {{ s.policy_version }}</p>
+  <h2>Entertainment only</h2>
+  <p>RoastMyFeed produces AI-generated humor from the sample you give it. It is not a psychological assessment, a measure of your real viewing, or advice of any kind. Results can be wrong, odd or unfunny.</p>
+  <h2>Your input</h2>
+  <ul>
+    <li>Only submit your own taste, in your own words.</li>
+    <li>Don't submit other people's personal information, or content meant to harass or target someone.</li>
+    <li>You are responsible for what you choose to send to the AI provider named at the point of generation.</li>
+  </ul>
+  <h2>Eligibility</h2>
+  <p>You must be at least 16 years old.</p>
+  <h2>Sharing</h2>
+  <p>Downloaded share cards are yours to post or not. We never post for you. We can't remove an image you've already saved or shared.</p>
+  <h2>Independence</h2>
+  <p>RoastMyFeed is an independent product. It is not affiliated with, sponsored by or endorsed by YouTube or Google. Product and channel names mentioned by users belong to their owners.</p>
+  <h2>Availability and limits</h2>
+  <p>The service is provided as is, without warranties. We limit how many roasts each session can create ({{ s.gen_per_session_24h }} per 24 hours) and may pause generation at any time. To the extent the law allows, we aren't liable for indirect or consequential losses.</p>
+  <h2>Changes</h2>
+  <p>We may update these terms; the version above changes when we do. Contact: <a href="mailto:{{ s.support_contact }}">{{ s.support_contact }}</a>.</p>
+</section>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Support{% endblock %}
+{% block content %}
+<section class="prose">
+  <h1>Support</h1>
+  <p class="lede">Email <a href="mailto:{{ s.support_contact }}">{{ s.support_contact }}</a>. Please don't include your sample or report text; tell us what happened instead.</p>
+  <h2>Common questions</h2>
+  <dl>
+    <dt>Why can't I start?</dt><dd>You need at least {{ s.min_items }} eligible items. Items flagged as sensitive don't count, so edit or replace them.</dd>
+    <dt>My roast failed.</dt><dd>Results that don't meet our safety or structure checks are discarded rather than shown. Your approved sample is kept, so you can try again. Each session has {{ s.gen_per_session_24h }} attempts per 24 hours.</dd>
+    <dt>Can I link my YouTube account?</dt><dd>No. YouTube doesn't expose watch history and we don't connect to accounts.</dd>
+    <dt>How do I delete my data?</dt><dd>Open your results page and choose <em>Delete my data</em>, or let it expire after {{ s.report_ttl_hours }} hours.</dd>
+    <dt>My download didn't work.</dt><dd>The full report is always readable on the page. Try another browser, or take a screenshot of the card preview.</dd>
+  </dl>
+</section>
+{% endblock %}

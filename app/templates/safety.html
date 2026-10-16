@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Safety{% endblock %}
+{% block content %}
+<section class="prose">
+  <h1>Safety and what we won't roast</h1>
+  <p class="lede">Roasts target your viewing patterns, never you. These rules apply at every intensity.</p>
+  <h2>Fair game</h2>
+  <ul><li>Contradictions between interests</li><li>Tutorial collecting and productivity binges</li><li>Overly specific hobbies and repeated themes</li><li>Playful, clearly fictional viewing personas</li></ul>
+  <h2>Never allowed in a result</h2>
+  <ul>
+    <li>Slurs, hate, or attacks on protected characteristics</li>
+    <li>Guessing religion, caste, ethnicity, sexuality, disability or politics</li>
+    <li>Diagnoses, or claims about addiction, criminality or danger</li>
+    <li>Body-shaming, sexual humiliation, threats, or self-harm encouragement</li>
+    <li>Invented facts about your job, money, relationships or family</li>
+    <li>Insulting the creators you watch</li>
+    <li>Claims to know your real watch history</li>
+  </ul>
+  <h2>How we enforce it</h2>
+  <ol>
+    <li><strong>Before generation:</strong> we flag items that look sensitive (health, religion, politics, sexuality, personal details and similar) and leave them out of what is sent. You can see and edit them. This screening is a best effort and <em>cannot</em> catch everything, so please don't submit anything you'd rather keep private.</li>
+    <li><strong>After generation:</strong> every result is checked for structure, for evidence that really comes from your sample, and against our safety rules. Unsafe results are never shown. We retry once with a gentler instruction; if that also fails you get a plain failure message, not a generic insult passed off as personal.</li>
+  </ol>
+  <h2>Roast only yourself</h2>
+  <p>Only submit your own taste. This service is not for targeting or harassing other people.</p>
+  <p>Something wrong? Tell us at <a href="mailto:{{ s.support_contact }}">{{ s.support_contact }}</a>.</p>
+</section>
+{% endblock %}

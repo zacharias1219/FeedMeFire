@@ -1,0 +1,31 @@
+# Local stack: PostgreSQL + web + dedicated worker.   docker compose up --build
+# The fake provider needs no API key. For Gemini set PROVIDER=gemini and GEMINI_API_KEY in .env.
+x-app: &app
+  build: .
+  env_file: [.env]
+  environment:
+    DATABASE_URL: postgresql://roast:roast@db:5432/roast
+    AUTO_CREATE_TABLES: "false"
+  depends_on:
+    db: {condition: service_healthy}
+services:
+  db:
+    image: postgres:16
+    environment: {POSTGRES_USER: roast, POSTGRES_PASSWORD: roast, POSTGRES_DB: roast}
+    volumes: [dbdata:/var/lib/postgresql/data]
+    healthcheck: {test: ["CMD-SHELL", "pg_isready -U roast"], interval: 3s, retries: 20}
+  migrate:
+    <<: *app
+    command: alembic upgrade head
+    restart: "no"
+  web:
+    <<: *app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers
+    ports: ["8000:8000"]
+    depends_on: {migrate: {condition: service_completed_successfully}}
+  worker:
+    <<: *app
+    command: python -m app.worker
+    depends_on: {migrate: {condition: service_completed_successfully}}
+volumes:
+  dbdata:

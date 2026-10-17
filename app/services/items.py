@@ -13,6 +13,7 @@ MIN_TEXT, MAX_TEXT = 3, 200
 
 # Control characters, zero-width and bidi-override characters. \t and \n become spaces below.
 _CONTROL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f-\x9f​-‏‪-‮⁠-⁤﻿]")
+_NOT_A_TITLE = re.compile(r"^(?:(?:\d{1,2}:)?\d{1,2}:\d{2}|\d[\d.,]*\s*[kKmMbB]?(?:\s*(?:views?|subscribers?))?)$")
 _URL_ONLY = re.compile(r"^(?:[a-z][a-z0-9+.-]*://|www\.)\S+$|^\S+\.[a-z]{2,}/\S*$", re.I)
 
 
@@ -34,6 +35,8 @@ def validate_item(item_type: str, raw: str) -> tuple[str | None, str | None]:
     text = clean_text(raw)
     if _URL_ONLY.match(text):
         return None, "That looks like a link. Paste the video title or channel name instead."
+    if _NOT_A_TITLE.match(text):
+        return None, "That looks like a number or duration, not a title or name."
     if len(text) < MIN_TEXT:
         return None, f"Use at least {MIN_TEXT} characters."
     if len(text) > MAX_TEXT:

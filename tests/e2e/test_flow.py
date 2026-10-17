@@ -42,6 +42,7 @@ def test_full_manual_flow(server, browser, tmp_path):
     page.select_option("#add-type", "interest")
     page.check("input[name=paste-mode][value=plain]")
     page.click("#bulk-add")
+    page.click("#bulk-confirm")
     expect(page.locator("#input-count")).to_contain_text("Add 1 more")
     for t in ("Quiet carpentry channels", "Hand plane restoration", "Sharpening for beginners"):
         page.fill("#add-text", t); page.click("#add-form button[type=submit]")
@@ -129,11 +130,17 @@ def test_paste_whole_youtube_page_and_multiline_paste_into_single_box(server, br
     page.check("#chk-age"); page.check("#chk-terms"); page.click("#gate-go")
     page.fill("#bulk-text", text)
     page.click("#bulk-add")
-    expect(page.locator("#bulk-result")).to_contain_text("8 videos and 7 channels")
-    expect(page.locator("#input-count")).to_contain_text("15 added")
+    expect(page.locator("#bulk-summary")).to_contain_text("8 videos, 7 channels")
+    assert page.locator("#preview-chips li").count() == 15
+    page.locator("#preview-chips li .x").first.click()            # drop one before adding
+    page.click("#bulk-confirm")
+    expect(page.locator("#bulk-result")).to_contain_text("Added 14 items")
+    expect(page.locator("#input-count")).to_contain_text("14 added")
     expect(page.locator("#chips")).not_to_contain_text("383k")
     # a multi-line paste straight into the single-item box is parsed too, never collapsed into one item
     page.click("#use-demo")
     page.evaluate("""() => { const dt = new DataTransfer(); dt.setData('text', 'Alpha Video One\\nBeta Channel\\n10k\\n\\n1:00\\nGamma Video Two\\nDelta Channel\\n5k\\n\\n2:00');
       document.querySelector('#add-text').dispatchEvent(new ClipboardEvent('paste', {clipboardData: dt, bubbles: true, cancelable: true})); }""")
+    expect(page.locator("#bulk-summary")).to_contain_text("2 videos, 2 channels")
+    page.click("#bulk-confirm")
     expect(page.locator("#chips")).to_contain_text("Gamma Video Two")

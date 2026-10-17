@@ -59,3 +59,16 @@ def test_subscriptions_mode_keeps_channel_names_only(tmp_path):
 def test_overlong_lines_are_clipped_to_200(tmp_path):
     out = parse("x" * 500 + "\nChannel\n10k\n\n1:00\n", tmp=tmp_path)
     assert len(out["items"][0]["text"]) == 200
+
+
+def test_plain_mode_drops_numbers_durations_and_ages(tmp_path):
+    text = "Manware\n289\n6:30\n383k\n3 weeks ago\nByte Without Bite\n"
+    out = parse(text, "plain", "channel_name", tmp=tmp_path)
+    assert [i["text"] for i in out["items"]] == ["Manware", "Byte Without Bite"]
+
+
+def test_bullet_separated_metadata_does_not_swallow_names(tmp_path):
+    text = "Learn Piano in 30 Days\nKeys & Co \u2022 289 views \u2022 3 weeks ago\n6:30\nCooking at 2AM\nLoaf Lab \u00b7 No views\n1:00\n"
+    out = parse(text, tmp=tmp_path)
+    assert [i["text"] for i in out["items"] if i["item_type"] == "channel_name"] == ["Keys & Co", "Loaf Lab"]
+    assert [i["text"] for i in out["items"] if i["item_type"] == "video_title"] == ["Learn Piano in 30 Days", "Cooking at 2AM"]

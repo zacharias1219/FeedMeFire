@@ -20,6 +20,8 @@ def test_clean_text_strips_control_and_normalises_whitespace():
 
 def test_validate_item_rules():
     assert it.validate_item("video_title", "ab")[1]
+    for junk in ("289", "6:30", "383k", "1:02:03", "6.2K views", "40m"):
+        assert it.validate_item("video_title", junk)[1], junk   # metadata is never an item
     assert it.validate_item("video_title", "x" * 201)[1]
     assert it.validate_item("bogus", "hello there")[1]
     assert it.validate_item("video_title", "https://youtube.com/watch?v=abc")[1]

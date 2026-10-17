@@ -111,21 +111,46 @@ async function removeItem(id) {
   if (res) { state.sample = res; renderInput(); if (!$('#step-review').hidden) renderReview(); }
 }
 
-async function smartAdd(text) {
-  const out = $('#bulk-result'); out.hidden = true;
+let pending = null;  // parsed items awaiting the user's confirmation
+
+function smartAdd(text) {
+  $('#bulk-result').hidden = true; setErr('#input-err', '');
   const mode = $('input[name=paste-mode]:checked').value;
   const { items, stats } = parseYouTubePaste(text, mode, $('#add-type').value);
   if (!items.length) { setErr('#input-err', 'We could not find any items in that paste. Try Ctrl+A on the YouTube page, or switch the paste type.'); return; }
-  const room = Math.max(0, state.cfg.max_submitted_items - (state.sample ? state.sample.submitted_item_count : 0));
-  const kept = items.slice(0, room);
-  await addItems(kept);
+  pending = { items: items.slice(), stats };
+  renderPreview();
+}
+
+function renderPreview() {
+  const box = $('#bulk-preview');
+  if (!pending || !pending.items.length) { box.hidden = true; pending = null; return; }
+  const v = pending.items.filter((i) => i.item_type === 'video_title').length;
+  const c = pending.items.filter((i) => i.item_type === 'channel_name').length;
+  const o = pending.items.length - v - c;
   const parts = [];
-  if (stats.videos) parts.push(`${stats.videos} video${stats.videos > 1 ? 's' : ''}`);
-  if (stats.channels) parts.push(`${stats.channels} channel${stats.channels > 1 ? 's' : ''}`);
-  if (stats.others) parts.push(`${stats.others} item${stats.others > 1 ? 's' : ''}`);
-  out.textContent = `Found ${parts.join(' and ')}.${kept.length < items.length ? ` Only the first ${kept.length} fit (limit ${state.cfg.max_submitted_items}).` : ''} Check them on the next screen.`;
-  out.hidden = false;
-  $('#bulk-text').value = '';
+  if (v) parts.push(`${v} video${v > 1 ? 's' : ''}`);
+  if (c) parts.push(`${c} channel${c > 1 ? 's' : ''}`);
+  if (o) parts.push(`${o} item${o > 1 ? 's' : ''}`);
+  $('#bulk-summary').textContent = `Found ${parts.join(', ')}. We ignored ${pending.stats.skipped} lines of views, durations and dates.`;
+  const list = clear($('#preview-chips'));
+  pending.items.forEach((it, idx) => list.append(h('li', {},
+    h('span', { class: 'tag' }, TYPE_LABEL[it.item_type]), ' ', it.text, ' ',
+    h('button', { type: 'button', class: 'x', 'aria-label': `Don't add ${it.text}`, onclick: () => { pending.items.splice(idx, 1); renderPreview(); } }, '×'))));
+  $('#bulk-confirm').firstElementChild.textContent = `Add ${pending.items.length}`;
+  box.hidden = false;
+}
+
+async function confirmPreview() {
+  if (!pending) return;
+  const room = Math.max(0, state.cfg.max_submitted_items - (state.sample ? state.sample.submitted_item_count : 0));
+  const kept = pending.items.slice(0, room);
+  const cut = pending.items.length - kept.length;
+  pending = null; renderPreview();
+  await addItems(kept);
+  const out = $('#bulk-result');
+  out.textContent = `Added ${kept.length} item${kept.length === 1 ? '' : 's'}.${cut ? ` ${cut} didn't fit (limit ${state.cfg.max_submitted_items}).` : ''} Check them on the next screen.`;
+  out.hidden = false; $('#bulk-text').value = '';
 }
 
 function wireInput() {
@@ -136,6 +161,8 @@ function wireInput() {
     $('#add-text').value = ''; $('#add-text').focus();
   });
   $('#bulk-add').addEventListener('click', () => smartAdd($('#bulk-text').value));
+  $('#bulk-confirm').addEventListener('click', confirmPreview);
+  $('#bulk-cancel').addEventListener('click', () => { pending = null; renderPreview(); });
   // A multi-line paste into the single-item box would otherwise collapse into one giant item.
   $('#add-text').addEventListener('paste', (ev) => {
     const txt = (ev.clipboardData || window.clipboardData).getData('text');

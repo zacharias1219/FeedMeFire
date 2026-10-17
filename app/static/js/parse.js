@@ -4,6 +4,7 @@
 const DURATION = /^(?:\d{1,2}:)?\d{1,2}:\d{2}$/;
 const COUNT = /^\d[\d.,]*\s*[kKmMbB]?(?:\s*(?:views?|watching|subscribers?|likes?|comments?|व्यू\w*|बार देखा गया))?$/i;
 const REL_TIME = /^(?:streamed |premiered )?\d+\s+(?:second|minute|hour|day|week|month|year)s?\s+ago$/i;
+const NO_VIEWS = /^no views$/i;
 const INLINE_VIEWS = /\d[\d.,]*\s*[kKmMbB]?\s+(?:views?|watching|subscribers?)\b/i;
 const DATE_HEADING = /^(?:(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*,?\s+)?(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2}(?:,?\s+\d{4})?$/i;
 const NOISE = new Set(['shorts', 'now playing', 'live', 'new', 'mix', 'watch later', 'save to playlist', 'share', 'subscribe',
@@ -16,7 +17,7 @@ const MAX = 200;
 
 function kind(line) {
   if (DURATION.test(line)) return 'duration';
-  if (COUNT.test(line) || REL_TIME.test(line)) return 'meta';
+  if (COUNT.test(line) || REL_TIME.test(line) || NO_VIEWS.test(line)) return 'meta';
   if (line.length <= 50 && INLINE_VIEWS.test(line)) return 'meta';
   if (NOISE.has(line.toLowerCase()) || DATE_HEADING.test(line)) return 'noise';
   return 'text';
@@ -35,15 +36,19 @@ function dedupe(list) {
  * Returns { items: [{item_type, text}], stats: { videos, channels, others, skipped } }.
  */
 export function parseYouTubePaste(raw, mode = 'videos', plainType = 'interest') {
-  const lines = String(raw || '').replace(/\r/g, '').split('\n').map((s) => s.replace(/\s+/g, ' ').trim()).filter(Boolean);
+  // "Channel • 289 views • 3 weeks ago" is split into separate segments so metadata never swallows a name.
+  const lines = String(raw || '').replace(/\r/g, '').split('\n')
+    .flatMap((l) => l.split(/\s[•·]\s/))
+    .map((s) => s.replace(/\s+/g, ' ').trim()).filter(Boolean);
   const kinds = lines.map(kind);
   const clip = (s) => s.slice(0, MAX).trim();
   const stats = { videos: 0, channels: 0, others: 0, skipped: 0 };
   const items = [];
 
   if (mode === 'plain') {
-    for (const l of dedupe(lines.map(clip))) items.push({ item_type: plainType, text: l });
-    stats.others = items.length;
+    // Even a plain list never wants "6:30", "289" or "3 weeks ago" as an item.
+    for (const l of dedupe(lines.filter((_, i) => kinds[i] === 'text').map(clip))) items.push({ item_type: plainType, text: l });
+    stats.others = items.length; stats.skipped = lines.length - items.length;
     return { items, stats };
   }
 

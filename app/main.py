@@ -92,6 +92,8 @@ async def envelope_and_headers(request: Request, call_next):
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
     if settings.secure_cookie:
         response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains"
+    if request.url.path.startswith("/static/"):
+        response.headers["Cache-Control"] = "no-cache"  # revalidate (ETag) so a deploy is never masked by a stale script
     if request.url.path.startswith(PRIVATE_PREFIXES):
         response.headers["Cache-Control"] = "no-store"
     if "content-security-policy" not in response.headers:

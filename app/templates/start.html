@@ -47,7 +47,13 @@
       </fieldset>
       <label for="bulk-text" class="sr-only">Pasted text</label>
       <textarea id="bulk-text" rows="6" placeholder="Paste here. Multi-line pastes into the single box above also work."></textarea>
-      <button class="btn-ghost" id="bulk-add" type="button">Clean up and add</button>
+      <button class="btn-ghost" id="bulk-add" type="button">Clean up and preview</button>
+      <div id="bulk-preview" class="preview" hidden>
+        <p class="count" id="bulk-summary" aria-live="polite"></p>
+        <p class="hint">This is what we collected. Remove anything that doesn't belong, then add.</p>
+        <ul class="chips" id="preview-chips" aria-label="Items found"></ul>
+        <div class="row"><button class="btn-glow" id="bulk-confirm" type="button"><span>Add these</span></button><button class="btn-ghost" id="bulk-cancel" type="button">Cancel</button></div>
+      </div>
       <p class="ok" id="bulk-result" role="status" hidden></p>
     </details>
     <p class="hint" id="suggest">Tip: mix types. A few videos, a few channels and a few interests give the funniest contradictions.</p>

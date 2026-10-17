@@ -30,6 +30,21 @@ BASE = Path(__file__).parent
 log = logging.getLogger("rmf.web")
 templates = Jinja2Templates(directory=str(BASE / "templates"))
 
+
+def _asset_version() -> str:
+    """Content hash of the JS/CSS/JSON assets. Appended as ?v= so a deploy always produces new URLs and a browser
+    can never keep running a stale script against a newer server (the ES-module entry points are versioned)."""
+    h = hashlib.sha256()
+    for p in sorted((BASE / "static").rglob("*")):
+        if p.is_file() and p.suffix in (".js", ".css", ".json"):
+            h.update(p.relative_to(BASE).as_posix().encode())
+            h.update(p.read_bytes())
+    return h.hexdigest()[:10]
+
+
+ASSET_V = _asset_version()
+templates.env.globals["asset_v"] = ASSET_V
+
 # --- Content-Security-Policy ---------------------------------------------------------------------
 IMG_HOSTS = "https://d8j0ntlcm91z4.cloudfront.net"
 _INLINE_SCRIPT = re.compile(r"<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>", re.S)

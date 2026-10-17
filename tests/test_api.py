@@ -642,3 +642,14 @@ def test_concurrent_claims_do_not_double_run(ready_api, use_provider):
     [t.start() for t in ts]
     [t.join() for t in ts]
     assert results.count(True) == 1 and len(p.calls) == 1
+
+
+def test_asset_urls_are_versioned_and_static_revalidates():
+    import re
+    from app import main
+    c = make_client().tc
+    html = c.get("/start").text
+    assert re.search(r'/static/js/app\.js\?v=[0-9a-f]{10}"', html) and re.search(r'/static/app\.css\?v=[0-9a-f]{10}"', html)
+    assert f"v={main.ASSET_V}" in html and f"v={main.ASSET_V}" in c.get("/demo").text
+    assert c.get("/static/js/app.js").headers["cache-control"] == "no-cache"
+    assert main._asset_version() == main.ASSET_V          # stable for unchanged content

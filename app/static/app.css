@@ -158,3 +158,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}
   .panel{padding:16px}
 }
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+.modes{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.radio.sm{padding:8px 12px;margin:0;font-size:14px}
+.radio.sm small{color:var(--muted);font-size:12px}
+details.bulk .btn-ghost{margin-top:10px}

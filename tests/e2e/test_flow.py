@@ -38,9 +38,9 @@ def test_full_manual_flow(server, browser, tmp_path):
     # input: too few -> cannot review as ready; add 12 via bulk
     page.fill("#add-text", "https://youtube.com/watch?v=abc"); page.click("#add-form button[type=submit]")
     expect(page.locator("#input-err")).to_contain_text("link")
-    page.locator("details.bulk summary").click()
     page.fill("#bulk-text", "\n".join(ITEMS.split("\n")[:9]))
     page.select_option("#add-type", "interest")
+    page.check("input[name=paste-mode][value=plain]")
     page.click("#bulk-add")
     expect(page.locator("#input-count")).to_contain_text("Add 1 more")
     for t in ("Quiet carpentry channels", "Hand plane restoration", "Sharpening for beginners"):
@@ -119,3 +119,21 @@ def test_landing_phone_layout(server, browser):
     page.goto(server + "/")
     page.wait_for_selector(".cta2")
     assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+
+
+def test_paste_whole_youtube_page_and_multiline_paste_into_single_box(server, browser):
+    import pathlib
+    text = (pathlib.Path(__file__).parent.parent / "fixtures/yt_history_paste.txt").read_text()
+    page = browser.new_page(viewport={"width": 1000, "height": 900})
+    page.goto(server + "/start")
+    page.check("#chk-age"); page.check("#chk-terms"); page.click("#gate-go")
+    page.fill("#bulk-text", text)
+    page.click("#bulk-add")
+    expect(page.locator("#bulk-result")).to_contain_text("8 videos and 7 channels")
+    expect(page.locator("#input-count")).to_contain_text("15 added")
+    expect(page.locator("#chips")).not_to_contain_text("383k")
+    # a multi-line paste straight into the single-item box is parsed too, never collapsed into one item
+    page.click("#use-demo")
+    page.evaluate("""() => { const dt = new DataTransfer(); dt.setData('text', 'Alpha Video One\\nBeta Channel\\n10k\\n\\n1:00\\nGamma Video Two\\nDelta Channel\\n5k\\n\\n2:00');
+      document.querySelector('#add-text').dispatchEvent(new ClipboardEvent('paste', {clipboardData: dt, bubbles: true, cancelable: true})); }""")
+    expect(page.locator("#chips")).to_contain_text("Gamma Video Two")

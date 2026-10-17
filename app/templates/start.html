@@ -38,10 +38,17 @@
       </div>
       <button class="btn-ghost" type="submit">Add</button>
     </form>
-    <details class="bulk"><summary>Paste many at once</summary>
-      <label for="bulk-text">One item per line (uses the type selected above)</label>
-      <textarea id="bulk-text" rows="6" placeholder="Slow living vlogs&#10;Desk setup tours&#10;Notion templates"></textarea>
-      <button class="btn-ghost" id="bulk-add" type="button">Add all lines</button>
+    <details class="bulk" open><summary>Paste from YouTube (fastest)</summary>
+      <p class="hint">Open your <strong>Liked videos</strong>, a playlist, <strong>History</strong> or <strong>Subscriptions</strong> in YouTube, press Ctrl+A then Ctrl+C, and paste below. We strip the clutter (views, durations, dates) and pull out titles and channels. You review everything before anything is sent. We never connect to YouTube.</p>
+      <fieldset class="modes"><legend class="sr-only">What did you paste?</legend>
+        <label class="radio sm"><input type="radio" name="paste-mode" value="videos" checked><span>Videos <small>liked, playlist, history</small></span></label>
+        <label class="radio sm"><input type="radio" name="paste-mode" value="channels"><span>Subscriptions <small>channel names</small></span></label>
+        <label class="radio sm"><input type="radio" name="paste-mode" value="plain"><span>Simple list <small>one per line, uses the type above</small></span></label>
+      </fieldset>
+      <label for="bulk-text" class="sr-only">Pasted text</label>
+      <textarea id="bulk-text" rows="6" placeholder="Paste here. Multi-line pastes into the single box above also work."></textarea>
+      <button class="btn-ghost" id="bulk-add" type="button">Clean up and add</button>
+      <p class="ok" id="bulk-result" role="status" hidden></p>
     </details>
     <p class="hint" id="suggest">Tip: mix types. A few videos, a few channels and a few interests give the funniest contradictions.</p>
     <p id="input-count" class="count" aria-live="polite"></p>

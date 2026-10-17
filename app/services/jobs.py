@@ -62,17 +62,27 @@ def claim_next(db: Session, owner: str) -> GenerationJob | None:
     if job is None:
         db.rollback()
         return None
-    job.attempt_count += 1
-    if job.attempt_count > settings.max_attempts:  # abandoned too many times: stop spending
-        job.status, job.error_code, job.completed_at = "failed", job.error_code or "PROVIDER_UNAVAILABLE", now
-        job.lease_owner = job.lease_expires_at = None
-        db.commit()
-        return None
-    job.status = "validating"
-    job.lease_owner = owner
-    job.lease_expires_at = now + timedelta(seconds=settings.lease_seconds)
-    job.started_at = job.started_at or now
+    # Compare-and-swap: the SELECT above may be seen by several workers (SQLite ignores SKIP LOCKED), so the
+    # claim only counts if the row is still exactly as we read it. Exactly one UPDATE can win.
+    seen_status, seen_lease, seen_attempts = job.status, job.lease_expires_at, job.attempt_count
+    attempts = seen_attempts + 1
+    values: dict = {"attempt_count": attempts}
+    if attempts > settings.max_attempts:  # abandoned too many times: stop spending
+        values.update(status="failed", error_code=job.error_code or "PROVIDER_UNAVAILABLE", completed_at=now,
+                      lease_owner=None, lease_expires_at=None)
+    else:
+        values.update(status="validating", lease_owner=owner,
+                      lease_expires_at=now + timedelta(seconds=settings.lease_seconds),
+                      started_at=job.started_at or now)
+    lease_match = (GenerationJob.lease_expires_at.is_(None) if seen_lease is None
+                   else GenerationJob.lease_expires_at == seen_lease)
+    won = db.execute(update(GenerationJob).where(
+        GenerationJob.id == job.id, GenerationJob.status == seen_status,
+        GenerationJob.attempt_count == seen_attempts, lease_match).values(**values)).rowcount == 1
     db.commit()
+    if not won or attempts > settings.max_attempts:
+        return None
+    db.refresh(job)
     return job
 
 

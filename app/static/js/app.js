@@ -4,6 +4,7 @@ import { $, $$, h, clear, show } from './dom.js';
 import { api, ApiError, setCsrf, newKey } from './api.js';
 import { fillHero, renderBody, quoteChoices, INTENSITY_LABEL } from './render.js';
 import { drawCard, downloadCanvas } from './card.js';
+import { parseYouTubePaste } from './parse.js';
 
 const STEPS = ['gate', 'input', 'review', 'prefs', 'generating', 'results', 'error', 'deleted'];
 const PROGRESS = { input: 0, review: 1, prefs: 2, generating: 3, results: 4 };
@@ -110,6 +111,23 @@ async function removeItem(id) {
   if (res) { state.sample = res; renderInput(); if (!$('#step-review').hidden) renderReview(); }
 }
 
+async function smartAdd(text) {
+  const out = $('#bulk-result'); out.hidden = true;
+  const mode = $('input[name=paste-mode]:checked').value;
+  const { items, stats } = parseYouTubePaste(text, mode, $('#add-type').value);
+  if (!items.length) { setErr('#input-err', 'We could not find any items in that paste. Try Ctrl+A on the YouTube page, or switch the paste type.'); return; }
+  const room = Math.max(0, state.cfg.max_submitted_items - (state.sample ? state.sample.submitted_item_count : 0));
+  const kept = items.slice(0, room);
+  await addItems(kept);
+  const parts = [];
+  if (stats.videos) parts.push(`${stats.videos} video${stats.videos > 1 ? 's' : ''}`);
+  if (stats.channels) parts.push(`${stats.channels} channel${stats.channels > 1 ? 's' : ''}`);
+  if (stats.others) parts.push(`${stats.others} item${stats.others > 1 ? 's' : ''}`);
+  out.textContent = `Found ${parts.join(' and ')}.${kept.length < items.length ? ` Only the first ${kept.length} fit (limit ${state.cfg.max_submitted_items}).` : ''} Check them on the next screen.`;
+  out.hidden = false;
+  $('#bulk-text').value = '';
+}
+
 function wireInput() {
   $('#add-form').addEventListener('submit', async (ev) => {
     ev.preventDefault();
@@ -117,10 +135,11 @@ function wireInput() {
     await addItems([{ item_type: $('#add-type').value, text }]);
     $('#add-text').value = ''; $('#add-text').focus();
   });
-  $('#bulk-add').addEventListener('click', async () => {
-    const type = $('#add-type').value;
-    await addItems($('#bulk-text').value.split('\n').map((t) => ({ item_type: type, text: t })));
-    $('#bulk-text').value = '';
+  $('#bulk-add').addEventListener('click', () => smartAdd($('#bulk-text').value));
+  // A multi-line paste into the single-item box would otherwise collapse into one giant item.
+  $('#add-text').addEventListener('paste', (ev) => {
+    const txt = (ev.clipboardData || window.clipboardData).getData('text');
+    if (txt && txt.includes('\n')) { ev.preventDefault(); $('#bulk-text').value = txt; smartAdd(txt); }
   });
   $('#use-demo').addEventListener('click', async () => {
     if (state.sample && state.sample.submitted_item_count && !confirm('Replace your current items with the fictional demo sample?')) return;

@@ -6,6 +6,15 @@
 - Tests: `pip install -r requirements-dev.txt && pytest` (SQLite). For PostgreSQL set `TEST_DATABASE_URL`.
   Browser tests: `playwright install chromium && pytest -m e2e tests/e2e`.
 
+## GitHub Pages (static preview only)
+GitHub Pages serves static files, so it can host the landing page, `/demo` and the info pages, **not** the app itself
+(sessions, job queue, AI provider need a server: use Docker Compose, Render, Fly.io, Railway or similar).
+- Build locally: `PAGES_BASE=/FeedMeFire python scripts/build_pages.py dist` (set `APP_URL` to send "Start roast" to a hosted backend).
+- Deploy: `.github/workflows/pages.yml`. One-time setup: repo **Settings -> Pages -> Source: GitHub Actions**
+  (private repos need a paid GitHub plan, and the published site is public), then either run the workflow manually
+  or set the repository variable `PAGES_ENABLED=true` so every push to `main` redeploys.
+- Without `APP_URL`, `/start` shows a "static preview" notice instead of the builder.
+
 ## Production checklist
 1. `ENV=prod`, a PostgreSQL `DATABASE_URL`, `APP_SECRET` (32+ chars), `ENCRYPTION_KEYS` from a managed secret store. The app refuses to start otherwise.
 2. `PROVIDER=gemini` with a **paid** arrangement whose data-use terms match `/privacy`. Review provider retention and

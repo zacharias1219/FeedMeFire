@@ -224,3 +224,4 @@ __marimo__/
 *.db
 *.db-wal
 *.db-shm
+dist/

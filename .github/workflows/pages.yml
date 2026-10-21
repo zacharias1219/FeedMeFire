@@ -1,0 +1,39 @@
+# Publishes the STATIC part of the site (landing, demo, info pages) to GitHub Pages.
+# The real app (sessions, queue, AI provider) cannot run on Pages; see docs/OPERATIONS.md.
+#
+# One-time setup: repo Settings -> Pages -> Source: "GitHub Actions" (private repos need a paid plan),
+# then set the repository variable PAGES_ENABLED=true (or run this workflow manually).
+# Optional variable APP_URL: where "Start roast" should send visitors if you host the backend elsewhere.
+name: pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || vars.PAGES_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12", cache: pip}
+      - run: pip install -r requirements.txt
+      - run: python scripts/build_pages.py dist
+        env:
+          PAGES_BASE: /${{ github.event.repository.name }}
+          APP_URL: ${{ vars.APP_URL }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: {path: dist}
+      - id: deployment
+        uses: actions/deploy-pages@v4

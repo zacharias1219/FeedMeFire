@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Static preview{% endblock %}
+{% block robots %}noindex{% endblock %}
+{% block content %}
+<section class="prose">
+  <h1>This is the static preview</h1>
+  <p class="lede">The live roast builder needs a server (sessions, a job queue and an AI provider), and GitHub Pages can only host static files.</p>
+  <p>You can still explore the <a href="/demo">fictional demo</a>, read <a href="/how-it-works">how it works</a>, and check the <a href="/safety">safety</a> and <a href="/privacy">privacy</a> pages.</p>
+  <p>To run the full app yourself, see the README in the repository.</p>
+  <p><a class="btn-glow" href="/demo"><span>See the demo</span></a></p>
+</section>
+{% endblock %}

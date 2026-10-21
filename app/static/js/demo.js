@@ -2,7 +2,7 @@ import { $, h } from './dom.js';
 import { fillHero, renderBody, quoteChoices, INTENSITY_LABEL } from './render.js';
 import { drawCard, downloadCanvas } from './card.js';
 
-const data = await (await fetch('/static/demo.json')).json();
+const data = await (await fetch(new URL('../demo.json', import.meta.url))).json();
 const { report, evidence, intensity, items } = data;
 $('#demo-items').append(...items.map((t) => h('li', {}, t)));
 fillHero(report, intensity);

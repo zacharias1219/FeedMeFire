@@ -26,6 +26,10 @@ EMBEDDED_WORKER=true uvicorn app.main:app        # http://localhost:8000, offlin
 ```
 See `docs/OPERATIONS.md` for Docker Compose, production configuration, kill switches, metrics and the launch checklist.
 
+## Static preview on GitHub Pages
+The landing page, demo and info pages can be published as a static site (`scripts/build_pages.py`, `.github/workflows/pages.yml`);
+the app itself needs a server. See `docs/OPERATIONS.md`.
+
 ## Status
 The manual-input MVP (Release A) is implemented. The connected YouTube release (B) is intentionally **not** built and cannot be
 enabled. Items needing human work before a public beta are listed at the end of `docs/OPERATIONS.md`.

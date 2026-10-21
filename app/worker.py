@@ -8,7 +8,7 @@ import socket
 import threading
 import uuid
 
-from . import db as dbm, logging_setup
+from . import db as dbm, logging_setup, providers
 from .config import settings
 from .services import retention
 from .services.generation import run_job
@@ -63,6 +63,7 @@ def start_workers(stop: threading.Event) -> list[threading.Thread]:
 def main() -> None:
     logging_setup.setup()
     settings.validate_for_runtime()
+    providers.check_ready()
     stop = threading.Event()
     for sig in (signal.SIGINT, signal.SIGTERM):
         signal.signal(sig, lambda *_: stop.set())

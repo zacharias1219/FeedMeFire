@@ -293,3 +293,64 @@ def test_base_url_and_reasoning_effort_reach_the_sdk_and_truncation_is_logged(mo
     out = SarvamProvider().generate("s", "{}", timeout=5)
     assert seen["environment"].base == "http://proxy.local:9" and FakeSarvam.calls[0]["reasoning_effort"] == "low"
     assert out.text == "" and "finish_reason=length" in caplog.text and "MAX_OUTPUT_TOKENS" in caplog.text
+
+
+# ---------- misconfiguration must be loud and immediate (a missing SDK used to surface only as a generic crash) ----------
+@pytest.fixture
+def no_sdk(monkeypatch):
+    """Pretend `sarvamai` is not installed for this Python."""
+    monkeypatch.setitem(__import__("sys").modules, "sarvamai", None)
+    monkeypatch.setattr(settings, "provider", "sarvam")
+    monkeypatch.setattr(settings, "sarvam_api_key", "k")
+
+
+def test_startup_check_names_the_python_and_the_fix(no_sdk):
+    with pytest.raises(RuntimeError) as e:
+        providers.check_ready()
+    msg = str(e.value)
+    assert "sarvamai" in msg and "pip install -r requirements.txt" in msg and __import__("sys").executable in msg
+
+
+def test_readiness_probe_fails_when_the_sdk_is_missing(no_sdk):
+    r = make_client().tc.get("/health/ready")
+    assert r.status_code == 503 and r.json()["provider_ok"] is False and "sys" not in json.dumps(r.json())
+
+
+def test_missing_sdk_fails_the_job_immediately_and_clearly(ready_api, no_sdk, caplog):
+    import logging
+    caplog.set_level(logging.ERROR)
+    s = ready_api.make_sample(15)
+    jid = ready_api.queue(s).json()["job_id"]
+    run_all()
+    job = ready_api.get(f"/api/v1/jobs/{jid}").json()
+    assert job["status"] == "failed" and job["error"]["code"] == "PROVIDER_MISCONFIGURED" and job["error"]["retryable"] is False
+    assert job["attempt_count"] == 1                                         # no pointless retries
+    assert "provider misconfigured" in caplog.text and "sarvamai" in caplog.text and "pip install -r requirements.txt" in caplog.text
+
+
+def test_unexpected_crash_logs_type_module_and_location_but_never_content(ready_api, use_provider, caplog):
+    import logging
+    caplog.set_level(logging.ERROR)
+
+    class Boom(Scripted):
+        def generate(self, system, user, *, timeout):
+            raise ModuleNotFoundError("secret user text zebra-77", name="some_missing_pkg")
+    use_provider(Boom(lambda u: {}))
+    s = ready_api.make_sample(15, texts=[{"item_type": "interest", "text": f"zebra-77 topic {i}"} for i in range(12)])
+    jid = ready_api.queue(s).json()["job_id"]
+    run_all()
+    assert ready_api.get(f"/api/v1/jobs/{jid}").json()["error"]["code"] == "INTERNAL_ERROR"
+    assert "ModuleNotFoundError" in caplog.text and "some_missing_pkg" in caplog.text and "test_sarvam.py" in caplog.text
+    assert "zebra-77" not in caplog.text and "secret user text" not in caplog.text
+
+
+def test_error_handling_survives_a_sdk_layout_change(sarvam, monkeypatch):
+    """If sarvamai.core.api_error moves in a future SDK version, HTTP errors must still map cleanly."""
+    monkeypatch.setitem(__import__("sys").modules, "sarvamai.core.api_error", None)
+    err = Exception("boom"); err.status_code = 503
+    sarvam.outcome = err
+    with pytest.raises(ProviderUnavailable, match="503"):
+        SarvamProvider().generate("s", "{}", timeout=5)
+    sarvam.outcome = ValueError("a real bug")
+    with pytest.raises(ValueError):                                          # unknown failures still surface (and get logged)
+        SarvamProvider().generate("s", "{}", timeout=5)

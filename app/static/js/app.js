@@ -232,7 +232,7 @@ async function startRoast() {
   const job = await guard(async () => {
     await ensureConsents();
     state.pendingKey = state.pendingKey || newKey();  // reused if the request is retried, so it can't double-spend
-    return api('POST', '/api/v1/reports', { sample_id: state.sample.id, approved_sample_hash: state.sample.approved_sample_hash, intensity },
+    return api('POST', '/api/v1/reports', { sample_id: state.sample.id, approved_sample_hash: state.sample.approved_sample_hash, intensity, language: $('#lang').value },
       { 'Idempotency-Key': state.pendingKey });
   }, '#prefs-err');
   if (!job) return;
@@ -301,6 +301,7 @@ async function loadReport(id) {
   const { report, evidence } = r;
   fillHero(report, r.intensity);
   renderBody($('#report-body'), report, evidence);
+  $('#report-body').lang = r.language || 'en'; $('#res-h').lang = r.language || 'en'; $('#res-persona').lang = r.language || 'en';
   $('#res-expires').textContent = `at ${new Date(r.expires_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}`;
   const pick = clear($('#quote-pick'));
   quoteChoices(report).forEach((q, i) => pick.append(h('option', { value: String(i) }, q)));
@@ -364,6 +365,8 @@ function wireResults() {
 async function boot() {
   state.cfg = await api('GET', '/api/v1/config');
   $$('[data-bind=min]').forEach((e) => { e.textContent = state.cfg.min_items; });
+  clear($('#lang')).append(...state.cfg.languages.map((l) => h('option', { value: l.code }, l.code === 'en' ? 'English' : `${l.native} (${l.name})`)));
+  $('#lang-note').textContent += state.cfg.provider === 'fake' ? ' Note: the built-in demo generator always writes English; connect Sarvam AI for other languages.' : '';
   $$('[data-bind=provider]').forEach((e) => { e.textContent = state.cfg.provider_name; });
   $$('[data-bind=feedback_days]').forEach((e) => { e.textContent = '30'; });
   wireGate(); wireInput(); wireReview(); wirePrefs(); wireGenerating(); wireResults();

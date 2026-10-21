@@ -15,6 +15,7 @@ from ..errors import AppError, job_error
 from ..models import Consent, Feedback, GenerationJob, Report, Sample, SessionModel
 from ..schemas import (REQUIRED_CONSENTS, ConsentIn, EventIn, FeedbackIn, RegenerateIn, ReportCreate, SampleCreate,
                        SamplePatch, SessionCreate)
+from ..languages import language_list
 from ..services import analytics, ratelimit, retention, samples, sessions
 from ..services.jobs import ACTIVE, STAGE_LABELS
 from .deps import session_read, session_write, session_write_allow_expired
@@ -27,6 +28,8 @@ router = APIRouter(prefix="/api/v1")
 def public_config():
     return {
         "provider_name": settings.provider_display_name,
+        "provider": settings.provider,
+        "languages": language_list(),
         "policy_version": settings.policy_version,
         "provider_disclosure_version": settings.provider_disclosure_version,
         "min_items": settings.min_items, "max_submitted_items": settings.max_submitted_items,
@@ -268,7 +271,7 @@ def read_report(report_id: str, s: SessionModel = Depends(session_read), db: Ses
     analytics.track(db, "report_viewed")
     db.commit()
     return {"id": r.id, "sample_id": r.sample_id, "intensity": r.intensity, "report": payload["report"],
-            "evidence": payload["evidence"], "schema_version": r.schema_version, "provider": r.provider,
+            "evidence": payload["evidence"], "language": payload.get("language", "en"), "schema_version": r.schema_version, "provider": r.provider,
             "created_at": r.created_at.isoformat() + "Z", "expires_at": r.expires_at.isoformat() + "Z",
             **_regen_state(db, s, r)}
 
@@ -297,7 +300,9 @@ def regenerate(report_id: str, body: RegenerateIn, request: Request, idempotency
         raise AppError("SAMPLE_CHANGED")
     ipk = _enforce_limits(db, s, request)
     try:
-        job = _enqueue(db, s, sample, key=idempotency_key, intensity=body.intensity, language="en",
+        source_job = db.get(GenerationJob, r.generation_job_id)
+        job = _enqueue(db, s, sample, key=idempotency_key, intensity=body.intensity,
+                       language=source_job.language if source_job else "en",
                        kind="regenerate", source_report_id=r.id, ipk=ipk)
         db.commit()
     except IntegrityError:

@@ -24,6 +24,18 @@ GitHub Pages serves static files, so it can host the landing page, `/demo` and t
 5. Jurisdiction-specific privacy/legal review of `/privacy` and `/terms` (they are drafts) before public launch.
 6. Load test (100 concurrent browsing sessions) and tune `WORKER_CONCURRENCY` to the provider's rate limits.
 
+## Sarvam AI and Indian languages
+- Set `PROVIDER=sarvam`, `SARVAM_API_KEY` (and optionally `SARVAM_MODEL`, default `sarvam-105b-conversations`). Check the model works with
+  your key first: `python scripts/sarvam_hello.py`.
+- The preferences screen offers English, Hindi, Tamil, Telugu, Bengali and Marathi (`app/languages.py`). The language travels with the job,
+  is stored with the report, and is kept on regeneration. The built-in `fake` provider always writes English.
+- **Safety outside English:** the rule-based checks are English-only, so for any other language a provider moderation pass
+  (`moderate()`) is mandatory and a rejection fails the job with `UNSAFE_OUTPUT`. This is weaker than the English path. Sensitive-input
+  screening of the user's own items is also English-keyword based. Build a native-speaker review set per language before launch.
+- Indic text needs ~3x the output tokens: `MAX_OUTPUT_TOKENS_INDIC` (default 6000). `SARVAM_JSON_MODE=true` turns on `response_format=json_object`
+  once you have verified the live model honours it.
+- The disclaimer translations in `app/languages.py` need native-speaker review. The UI chrome itself is still English.
+
 ## Kill switches (env, restart to apply; deletion is never gated)
 `GENERATION_ENABLED`, `REGENERATION_ENABLED`, `DISABLED_PROVIDERS`, `DISABLED_PROMPT_VERSIONS`, `YOUTUBE_CONNECT_ENABLED` (must stay false: the app refuses to start otherwise, see below).
 

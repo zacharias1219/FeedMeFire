@@ -23,7 +23,7 @@ export async function drawCard(canvas, { persona, quote, intensityLabel }) {
   glow.addColorStop(0, 'rgba(62,200,228,.45)'); glow.addColorStop(1, 'rgba(62,200,228,0)');
   ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
 
-  const sans = 'Poppins, system-ui, sans-serif';
+  const sans = 'Poppins, "Noto Sans Devanagari", "Noto Sans Tamil", "Noto Sans Telugu", "Noto Sans Bengali", "Nirmala UI", system-ui, sans-serif';
   ctx.fillStyle = '#fff'; ctx.textBaseline = 'alphabetic';
   ctx.font = `900 44px ${sans}`; ctx.fillText('ROASTMYFEED', 80, 130);
   ctx.font = `500 28px ${sans}`; ctx.fillStyle = '#8fdcee'; ctx.fillText('Your taste. On trial.', 80, 176);

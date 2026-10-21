@@ -9,5 +9,8 @@ def get_provider() -> Provider:
     if settings.provider == "gemini":
         from .gemini import GeminiProvider
         return GeminiProvider()
+    if settings.provider == "sarvam":
+        from .sarvam import SarvamProvider
+        return SarvamProvider()
     from .fake import FakeProvider
     return FakeProvider()

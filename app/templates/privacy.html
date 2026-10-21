@@ -26,6 +26,8 @@
   <p>Your approved sample is sent to: <strong>{{ provider }}</strong>.
   {% if s.provider == "gemini" %}
     The provider processes it under its own terms; how long it retains data on its side is governed by those terms and is separate from our retention below. See the <a href="https://ai.google.dev/gemini-api/terms" rel="noopener noreferrer">Gemini API terms</a>.
+  {% elif s.provider == "sarvam" %}
+    Sarvam AI processes it under its own terms and privacy policy; how long it retains data on its side is governed by those and is separate from our retention below. See <a href="https://www.sarvam.ai" rel="noopener noreferrer">sarvam.ai</a>. If you pick a language other than English, your items are still sent exactly as you typed them.
   {% else %}
     In this configuration text is generated on our own server and nothing is sent to a third party.
   {% endif %}

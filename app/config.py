@@ -20,11 +20,15 @@ class Settings(BaseSettings):
     public_base_url: str = ""
 
     # --- AI provider (PRD §9.1) ---
-    provider: str = "fake"  # fake | gemini
+    provider: str = "fake"  # fake | gemini | sarvam
     gemini_api_key: str = ""
     gemini_model: str = "gemini-2.5-flash"
+    sarvam_api_key: str = ""
+    sarvam_model: str = "sarvam-105b-conversations"
+    sarvam_json_mode: bool = False  # response_format=json_object; off until verified against the live model
     provider_timeout_s: float = 60.0
     max_output_tokens: int = 1800
+    max_output_tokens_indic: int = 6000  # Indic scripts tokenise far heavier than English
     temperature: float = 0.9
     pricing_version: str = "unset"
     price_input_per_mtok: float = 0.0  # USD per million input tokens
@@ -79,6 +83,8 @@ class Settings(BaseSettings):
     def provider_display_name(self) -> str:
         if self.provider == "gemini":
             return "Google (Gemini API)"
+        if self.provider == "sarvam":
+            return "Sarvam AI"
         return "Built-in demo generator (nothing leaves this server)"
 
     def csv(self, value: str) -> set[str]:
@@ -98,6 +104,8 @@ class Settings(BaseSettings):
                 problems.append("COOKIE_SECURE must be true in production")
             if self.provider == "gemini" and not self.gemini_api_key:
                 problems.append("GEMINI_API_KEY is required when PROVIDER=gemini")
+            if self.provider == "sarvam" and not self.sarvam_api_key:
+                problems.append("SARVAM_API_KEY is required when PROVIDER=sarvam")
             if self.provider == "fake":
                 problems.append("PROVIDER=fake is not allowed in production")
             if self.database_url.startswith("sqlite"):

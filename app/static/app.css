@@ -3,7 +3,7 @@
   --cyan:#3ec8e4;--cyan-soft:#8fdcee;--warn:#ffcf6b;--bad:#ff8f8f;--ok:#7be0b1;--radius:16px}
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--text);font:400 16px/1.6 Poppins,system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+body{background:var(--bg);color:var(--text);font:400 16px/1.6 Poppins,"Noto Sans Devanagari","Noto Sans Tamil","Noto Sans Telugu","Noto Sans Bengali","Nirmala UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;
   min-height:100vh;display:flex;flex-direction:column;
   background-image:linear-gradient(180deg,rgba(25,127,255,0) 40%,rgba(25,127,255,.05) 100%)}
 a{color:var(--cyan-soft);text-underline-offset:3px}

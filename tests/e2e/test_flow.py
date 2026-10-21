@@ -31,6 +31,7 @@ def test_full_manual_flow(server, browser, tmp_path):
     page = browser.new_page(viewport={"width": 1100, "height": 900}, accept_downloads=True)
     errs = collect_errors(page)
     page.goto(server + "/start")
+    expect(page.locator("#demo-banner")).to_be_visible()                      # PROVIDER=fake here: the canned generator is announced
     # gate: nothing pre-checked, continue disabled
     assert page.locator("#gate-go").is_disabled()
     page.check("#chk-age"); page.check("#chk-terms")
@@ -67,6 +68,7 @@ def test_full_manual_flow(server, browser, tmp_path):
     assert page.locator(".card-obs").count() >= 4
     expect(page.locator("#res-intensity")).to_contain_text("Gentle roast")
     expect(page.locator("#report-body")).to_have_attribute("lang", "hi")
+    expect(page.locator("#res-source")).to_contain_text("built-in demo generator")
     page.locator(".card-obs details summary").first.click()
     assert page.locator(".card-obs .evidence li").first.is_visible()
     assert "depression" not in page.locator("#report-body").inner_text().lower()

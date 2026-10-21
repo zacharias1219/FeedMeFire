@@ -6,10 +6,10 @@ from .base import Provider, ProviderError, ProviderTimeout, ProviderUnavailable 
 
 def get_provider() -> Provider:
     """Provider adapter factory. Tests monkeypatch this to inject scripted providers."""
-    if settings.provider == "gemini":
+    if settings.resolved_provider == "gemini":
         from .gemini import GeminiProvider
         return GeminiProvider()
-    if settings.provider == "sarvam":
+    if settings.resolved_provider == "sarvam":
         from .sarvam import SarvamProvider
         return SarvamProvider()
     from .fake import FakeProvider

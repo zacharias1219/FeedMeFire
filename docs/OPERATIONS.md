@@ -25,8 +25,19 @@ GitHub Pages serves static files, so it can host the landing page, `/demo` and t
 6. Load test (100 concurrent browsing sessions) and tune `WORKER_CONCURRENCY` to the provider's rate limits.
 
 ## Sarvam AI and Indian languages
-- Set `PROVIDER=sarvam`, `SARVAM_API_KEY` (and optionally `SARVAM_MODEL`, default `sarvam-105b-conversations`). Check the model works with
-  your key first: `python scripts/sarvam_hello.py`.
+- `PROVIDER` defaults to `auto`: with `SARVAM_API_KEY` set the app uses Sarvam (else Gemini if `GEMINI_API_KEY`, else the built-in demo
+  generator). `SARVAM_MODEL` defaults to `sarvam-105b-conversations`. Check the key/model first with `python scripts/sarvam_hello.py`.
+
+### Troubleshooting: "every roast has the same opening/closing lines"
+That is the built-in demo generator (fixed template text). Check, in order:
+1. `GET /health/ready` -> `"provider"` must be `sarvam` and `"demo_generator"` false. The `/start` page shows a yellow "Demo mode" banner when
+   the web process is on the demo generator, and each result says **"Written by <provider> · <model>"**: that line is the truth for that report.
+2. **The worker is a separate process.** The provider is chosen inside the worker, so it needs `SARVAM_API_KEY` too (same `.env`/secrets as the web
+   service). Key on web only = banner hidden but results say "built-in demo generator".
+3. `.env` is read from the directory the process starts in; hosted platforms must set the variable in their dashboard, not a local `.env`.
+4. An explicit `PROVIDER=fake` (the old `.env.example` default) overrides the key. Remove it or set `PROVIDER=auto`.
+5. The "Use the fictional demo sample" button always submits the same 15 items, so even a real model sees identical input.
+The startup log prints `AI provider = ...` (a WARNING in demo mode); Sarvam calls log `finish_reason` and token counts (never content).
 - The preferences screen offers English, Hindi, Tamil, Telugu, Bengali and Marathi (`app/languages.py`). The language travels with the job,
   is stored with the report, and is kept on regeneration. The built-in `fake` provider always writes English.
 - **Safety outside English:** the rule-based checks are English-only, so for any other language a provider moderation pass

@@ -653,3 +653,38 @@ def test_asset_urls_are_versioned_and_static_revalidates():
     assert f"v={main.ASSET_V}" in html and f"v={main.ASSET_V}" in c.get("/demo").text
     assert c.get("/static/js/app.js").headers["cache-control"] == "no-cache"
     assert main._asset_version() == main.ASSET_V          # stable for unchanged content
+
+
+def _cites(user, n_distinct):
+    """A valid report citing exactly n_distinct different items."""
+    ids = [i["id"] for i in json.loads(user)["sample_items"]][:n_distinct]
+    rep = good_report(user)
+    chunks = [ids[k::6] or [ids[0]] for k in range(6)]
+    for o, c in zip(rep["observations"] + rep["contradictions"], chunks[:4] + chunks[4:]):
+        o["evidence_item_ids"] = c[:4]
+    return rep
+
+
+def test_savage_must_cite_at_least_ten_items_spicy_only_six(ready_api, use_provider):
+    p = use_provider(Scripted(lambda u: _cites(u, 7)))
+    s = ready_api.make_sample(15)
+    jid = ready_api.queue(s, "savage").json()["job_id"]
+    run_all()
+    job = ready_api.get(f"/api/v1/jobs/{jid}").json()
+    assert job["status"] == "failed" and job["error"]["code"] == "INVALID_MODEL_OUTPUT"
+    assert len(p.calls) == 2 and "at least 10" in p.calls[1][0]               # one repair asking for broader coverage
+    assert json.loads(p.calls[0][1])["min_distinct_items"] == 10
+    other = make_client(); other.start(); other.consent_all()                  # same output is fine at Spicy
+    use_provider(Scripted(lambda u: _cites(u, 7)))
+    sp = other.make_sample(15)
+    jid = other.queue(sp, "spicy").json()["job_id"]
+    run_all()
+    assert other.get(f"/api/v1/jobs/{jid}").json()["status"] == "ready"
+
+
+def test_savage_accepts_a_report_that_uses_the_sample_broadly(ready_api, use_provider):
+    use_provider(Scripted(lambda u: _cites(u, 12)))
+    s = ready_api.make_sample(15)
+    jid = ready_api.queue(s, "savage").json()["job_id"]
+    run_all()
+    assert ready_api.get(f"/api/v1/jobs/{jid}").json()["status"] == "ready"

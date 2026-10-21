@@ -215,3 +215,31 @@ def test_demo_report_is_valid_grounded_and_safe():
     r = ReportOut.model_validate(d["report"])
     assert set(d["evidence"]) == r.evidence_ids() and safety.evaluate(r, allowed_terms=set()) == []
     assert r.disclaimer == DISCLAIMER
+
+
+# ---- intensity tiers: Spicy is the old Savage; Savage is maximum heat and must use the sample ----
+def test_intensity_tiers_and_coverage_rules():
+    from app.services import prompt
+    g = prompt.INTENSITY_GUIDE
+    assert g["spicy"].startswith("Spicy: stronger exaggeration and punchlines")           # old Savage wording
+    assert "MAXIMUM HEAT" in g["savage"] and "EVERYTHING" in g["savage"] and "safety rule" in g["savage"]
+    assert "never less safe" in g["savage"] and "profanity" in g["savage"]
+    assert prompt.min_evidence("savage", 40) == 10 and prompt.min_evidence("savage", 10) == 10
+    assert prompt.min_evidence("savage", 12) == 10 and prompt.min_evidence("spicy", 40) == 6
+    doc = json.loads(prompt.build_user_message([{"id": f"item_{i:02d}", "type": "interest", "text": "t"} for i in range(1, 13)], "savage", "en"))
+    assert doc["min_distinct_items"] == 10 and "MAXIMUM HEAT" in doc["intensity"]
+
+
+def test_fake_savage_is_hotter_longer_and_uses_the_whole_sample_yet_stays_safe():
+    from app.providers.fake import FakeProvider
+    from app.services import prompt
+    from app.services.demo_items import DEMO_ITEMS
+    items = [{"id": f"item_{i + 1:02d}", "type": t, "text": x} for i, (t, x) in enumerate(DEMO_ITEMS)]
+    out = {lvl: ReportOut.model_validate_json(FakeProvider().generate("", prompt.build_user_message(items, lvl, "en"), timeout=5).text)
+           for lvl in ("gentle", "spicy", "savage")}
+    s, sp = out["savage"], out["spicy"]
+    assert len(s.evidence_ids()) == len(items) > len(sp.evidence_ids())
+    assert s.word_count() > sp.word_count() * 1.5 and s.headline != sp.headline
+    assert all(len(o.evidence_item_ids) == 4 for o in s.observations)
+    allowed = {w.lower() for i in items for w in i["text"].split()}
+    assert safety.evaluate(s, allowed_terms=allowed, channel_names=[i["text"] for i in items if i["type"] == "channel_name"]) == []

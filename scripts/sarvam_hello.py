@@ -5,6 +5,9 @@ import sys
 from dotenv import load_dotenv
 from sarvamai import SarvamAI
 
+if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 load_dotenv()
 key = os.environ.get("SARVAM_API_KEY", "").strip()
 if not key:

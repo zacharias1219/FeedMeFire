@@ -22,9 +22,63 @@ class FakeProvider(Provider):
 
     TONE = {
         "gentle": ("quietly", "adorably", "lovingly"),
-        "spicy": ("suspiciously", "aggressively", "relentlessly"),
+        "spicy": ("shamelessly", "ferociously", "unapologetically"),  # what Savage used to be
         "savage": ("shamelessly", "ferociously", "unapologetically"),
     }
+
+    # Savage: maximum heat, built from as many of the user's own items as possible. Safe by construction:
+    # it attacks the queue and the habits, never identity, looks, health or worth.
+    SAVAGE_TITLES = ["That is not a taste, that is a hostage note", "The plan, the excuse and the alibi",
+                     "Consumption without a single result", "A rotation built to avoid starting",
+                     "Four tabs deep and nothing begun", "Exhibit F: the pattern is the defendant"]
+    SAVAGE_JOKES = [
+        "“{a}”, “{b}”, “{c}” and “{d}”: that is not a taste, that is a hostage note written by an algorithm.",
+        "You watch “{a}” like it will change your life, then “{b}” to make sure it never does. “{c}” and “{d}” are the alibis.",
+        "“{a}” is the plan, “{b}” is the procrastination, “{c}” is the excuse, and “{d}” is you calling it research.",
+        "Somewhere a creator is thanking you for the views on “{a}” and “{b}”. Nobody is thanking you for the results of “{c}” or “{d}”.",
+        "You consume “{a}” and “{b}” like coffee: constantly, grudgingly, with zero visible improvement. “{c}” and “{d}” are the refills.",
+        "“{a}”, “{b}”, “{c}”, “{d}”: four different hobbies, one shared outcome, which is you watching someone else do it.",
+    ]
+    SAVAGE_CONTRA = [
+        "“{x}” says you want discipline. “{y}” says you want a nap with subtitles. The queue has decided, and it chose the nap.",
+        "You keep “{x}” in the queue as proof of ambition and “{y}” as proof of reality. Reality has been winning for a while.",
+    ]
+
+    def _savage(self, items: list[dict], ids: list[str]) -> dict:
+        n = len(items)
+        cnt = 6 if n >= 12 else 4
+        obs = []
+        for k in range(cnt):
+            four = [items[(4 * k + j) % n] for j in range(4)]
+            obs.append({
+                "title": self.SAVAGE_TITLES[k][:80],
+                "joke": self.SAVAGE_JOKES[k].format(a=_snip(four[0]["text"], 34), b=_snip(four[1]["text"], 34),
+                                                    c=_snip(four[2]["text"], 34), d=_snip(four[3]["text"], 34))[:300],
+                "evidence_item_ids": [i["id"] for i in four],
+            })
+        used = 4 * cnt
+        contra = []
+        for k in range(2):
+            x, y = items[(used + 2 * k) % n], items[(used + 2 * k + 1) % n]
+            contra.append({"joke": self.SAVAGE_CONTRA[k].format(x=_snip(x["text"], 40), y=_snip(y["text"], 40))[:250],
+                           "evidence_item_ids": [x["id"], y["id"]]})
+        by_type: dict[str, int] = {}
+        for i in items:
+            by_type[i["type"]] = by_type.get(i["type"], 0) + 1
+        top = max(by_type, key=by_type.get)
+        persona = {"video_title": "The Unrepentant Title Collector", "channel_name": "The Channel Hostage",
+                   "interest": "The Interest Hoarder"}[top]
+        return {
+            "schema_version": "1.0",
+            "headline": "Your taste called. It wants a lawyer.",
+            "persona": {"label": persona, "description": "A fictional viewing persona, not a personality assessment."},
+            "opening_roast": (f"Out of {n} things you chose, every single one is a confession. You didn't build a taste, "
+                              "you built an excuse, one tab at a time, and the evidence is merciless."),
+            "observations": obs, "contradictions": contra,
+            "affectionate_closer": "Be proud: very few people have turned procrastination into a full-time archive.",
+            "share_quote": "I got roasted by my own queue and it was right.",
+            "disclaimer": DISCLAIMER,
+        }
 
     def generate(self, system: str, user: str, *, timeout: float) -> ProviderResult:
         doc = json.loads(user)
@@ -32,6 +86,9 @@ class FakeProvider(Provider):
         level = next((k for k in self.TONE if doc["intensity"].lower().startswith(k)), "spicy")
         adv = self.TONE[level]
         ids = [i["id"] for i in items]
+        if level == "savage":
+            text = json.dumps(self._savage(items, ids), ensure_ascii=False)
+            return ProviderResult(text, input_tokens=len(user) // 4, output_tokens=len(text) // 4)
         by_type: dict[str, list[dict]] = {}
         for i in items:
             by_type.setdefault(i["type"], []).append(i)

@@ -151,6 +151,7 @@ def _call_pipeline(job_id: str, owner: str, provider, deadline: float) -> None:
                                          meta["intensity"], meta["language"])
     _set_status(job_id, owner, "generating")
 
+    need = prompt.min_evidence(meta["intensity"], len(entries))
     usage = {"in": 0, "out": 0}
     extra, repaired, safer = "", False, False
     while True:
@@ -170,13 +171,17 @@ def _call_pipeline(job_id: str, owner: str, provider, deadline: float) -> None:
             unknown = validate_evidence(report, aliases)
             if unknown:
                 problem = "evidence_item_ids"
+            elif len(report.evidence_ids()) < need:
+                problem = "coverage"
         except (ValueError, ValidationError) as e:  # JSONDecodeError is a ValueError
             problem = ",".join(sorted({".".join(map(str, err["loc"][:2])) for err in e.errors()})) \
                 if isinstance(e, ValidationError) else "json"
         if problem:
             if repaired:
                 raise JobFailed("INVALID_MODEL_OUTPUT")
-            repaired, extra = True, prompt.REPAIR_SUFFIX.format(locs=problem)
+            repaired = True
+            extra = (prompt.COVERAGE_SUFFIX.format(n=need) if problem == "coverage"
+                     else prompt.REPAIR_SUFFIX.format(locs=problem))
             _set_status(job_id, owner, "generating")
             continue
 

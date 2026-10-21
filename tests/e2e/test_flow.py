@@ -58,10 +58,15 @@ def test_full_manual_flow(server, browser, tmp_path):
     expect(page.locator("#start")).to_be_disabled()
     page.check("#c-own"); page.check("#c-provider"); page.check("#c-fun")
     page.check("input[value=gentle]")
+    assert page.locator("#lang option").all_inner_texts() == ["English", "हिन्दी (Hindi)", "தமிழ் (Tamil)", "తెలుగు (Telugu)", "বাংলা (Bengali)", "मराठी (Marathi)"]
+    assert page.locator("#lang").input_value() == "en"                       # English by default
+    expect(page.locator("#lang-note")).to_contain_text("demo generator always writes English")
+    page.select_option("#lang", "hi")
     page.click("#start")
     page.wait_for_selector("#step-results:not([hidden])", timeout=30000)
     assert page.locator(".card-obs").count() >= 4
     expect(page.locator("#res-intensity")).to_contain_text("Gentle roast")
+    expect(page.locator("#report-body")).to_have_attribute("lang", "hi")
     page.locator(".card-obs details summary").first.click()
     assert page.locator(".card-obs .evidence li").first.is_visible()
     assert "depression" not in page.locator("#report-body").inner_text().lower()

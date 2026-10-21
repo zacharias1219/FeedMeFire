@@ -4,7 +4,7 @@ from __future__ import annotations
 import httpx
 
 from ..config import settings
-from .base import Provider, ProviderResult, ProviderTimeout, ProviderUnavailable
+from .base import Provider, ProviderResult, ProviderTimeout, ProviderUnavailable, output_budget
 
 BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 
@@ -35,7 +35,7 @@ class GeminiProvider(Provider):
             "contents": [{"role": "user", "parts": [{"text": user}]}],
             "generationConfig": {
                 "responseMimeType": "application/json",
-                "maxOutputTokens": settings.max_output_tokens,
+                "maxOutputTokens": output_budget(user),
                 "temperature": settings.temperature,
             },
         }, timeout)

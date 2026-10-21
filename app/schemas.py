@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_vali
 
 ItemType = Literal["video_title", "channel_name", "interest"]
 Intensity = Literal["gentle", "spicy", "savage"]
+Language = Literal["en", "hi", "ta", "te", "bn", "mr"]
 ConsentType = Literal["terms_privacy", "own_sample", "provider_send", "entertainment"]
 REQUIRED_CONSENTS: tuple[str, ...] = ("terms_privacy", "own_sample", "provider_send", "entertainment")
 DISCLAIMER = ("AI-generated entertainment based only on the sample you selected. "
@@ -54,7 +55,7 @@ class ReportCreate(Strict):
     sample_id: str
     approved_sample_hash: str
     intensity: Intensity = "spicy"
-    language: Literal["en"] = "en"
+    language: Language = "en"
 
 
 class RegenerateIn(Strict):

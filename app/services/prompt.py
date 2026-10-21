@@ -21,6 +21,7 @@ Never diagnose, never mention addiction, never use profanity, never body-shame, 
 Use the requested intensity without relaxing safety restrictions.
 Attach valid evidence item IDs to every observation and every contradiction. Use only IDs that appear in the sample. Across the whole report, cite at least as many different items as min_distinct_items in the request says.
 Write 250 to 450 words in total. Plain text only: no HTML, no links, no markdown.
+Write every human-readable field in the requested output_language, in natural, colloquial, idiomatic phrasing in that language's own script (not transliteration). Quote item titles exactly as given. JSON keys, schema_version and evidence item IDs stay exactly as specified.
 Return only JSON matching the required schema, with no extra fields."""
 
 INTENSITY_GUIDE = {
@@ -61,11 +62,14 @@ def build_system(extra: str = "") -> str:
 
 
 def build_user_message(items: list[dict], intensity: str, language: str) -> str:
+    from ..languages import LANGUAGES
+    lang = LANGUAGES.get(language, LANGUAGES["en"])
+    language_label = lang["name"] if language == "en" else f'{lang["name"]} ({lang["native"]}), written in its native script'
     """items: [{id, type, text}] (alias IDs only; no database identifiers)."""
     doc = {
         "task": "Write the roast report for the sample below.",
         "intensity": INTENSITY_GUIDE[intensity],
-        "output_language": language,
+        "output_language": language_label,
         "min_distinct_items": min_evidence(intensity, len(items)),
         "sample_items": items,
         "required_output_schema": ReportOut.model_json_schema(),

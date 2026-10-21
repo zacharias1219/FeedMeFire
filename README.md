@@ -11,7 +11,7 @@ evidence-grounded roast, a fictional persona and a downloadable share card. It n
 | Demo (no AI call) and info pages | `/demo`, `/how-it-works`, `/safety`, `/privacy`, `/terms`, `/support` |
 | API (PRD §13) | `app/routes/api.py` |
 | Job queue, worker, pipeline | `app/services/jobs.py`, `generation.py`, `app/worker.py` |
-| Providers (Gemini + offline fake) | `app/providers/` |
+| Providers (Sarvam AI, Gemini, offline fake) and roast languages | `app/providers/`, `app/languages.py` |
 | Safety, evidence validation, retention, metrics | `app/services/` |
 | Migrations | `alembic/` |
 | Tests (unit, API/acceptance AC-01–12, browser E2E) | `tests/` |

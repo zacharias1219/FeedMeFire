@@ -22,7 +22,8 @@ from ..crypto import decrypt_text, encrypt_json
 from ..db import hours_from_now, session_scope, utcnow
 from ..models import GenerationJob, Report, Sample, SampleItem, SessionModel
 from ..providers.base import ProviderTimeout, ProviderUnavailable
-from ..schemas import DISCLAIMER, ReportOut, validate_evidence
+from ..languages import disclaimer_for
+from ..schemas import ReportOut, validate_evidence
 from . import analytics, items as it, prompt, safety
 from .cost import estimate_cost
 from .jobs import ACTIVE, IN_FLIGHT, Heartbeat, backoff_seconds, check_transition
@@ -88,14 +89,14 @@ def _load(job_id: str, owner: str) -> tuple[dict, list[tuple[str, str, str]]]:
         return meta, entries
 
 
-def _persist(job_id: str, owner: str, report: ReportOut, evidence: dict, usage: dict, provider) -> str:
+def _persist(job_id: str, owner: str, report: ReportOut, evidence: dict, usage: dict, provider, language: str = "en") -> str:
     """Final write. The row lock plus liveness re-check means a deleted/cancelled job cannot gain a report."""
     with session_scope() as db:
         job = _guard(db, job_id, owner, lock=True)
         check_transition(job.status, "ready")
         r = Report(session_id=job.session_id, sample_id=job.sample_id, generation_job_id=job.id,
                    is_regeneration=job.kind == "regenerate", intensity=job.intensity,
-                   report_ciphertext=encrypt_json({"report": report.model_dump(), "evidence": evidence}),
+                   report_ciphertext=encrypt_json({"report": report.model_dump(), "evidence": evidence, "language": language}),
                    schema_version=report.schema_version, prompt_version=prompt.PROMPT_VERSION,
                    provider=provider.name, model_identifier=provider.model,
                    input_tokens=usage["in"], output_tokens=usage["out"],
@@ -185,9 +186,10 @@ def _call_pipeline(job_id: str, owner: str, provider, deadline: float) -> None:
             _set_status(job_id, owner, "generating")
             continue
 
-        report = report.model_copy(update={"disclaimer": DISCLAIMER})  # our wording, always
+        report = report.model_copy(update={"disclaimer": disclaimer_for(meta["language"])})  # our wording, always
         violations = safety.evaluate(report, allowed_terms=_words(texts), channel_names=channels)
-        if not violations and settings.safety_judge_enabled:
+        # The rule-based checks are English-only, so for any other language a model moderation pass is mandatory.
+        if not violations and (settings.safety_judge_enabled or meta["language"] != "en"):
             if not provider.moderate("\n".join(report.narrative_text()), timeout=min(20, max(3, deadline - time.monotonic()))):
                 violations = ["judge_rejected"]
         if violations:
@@ -200,7 +202,7 @@ def _call_pipeline(job_id: str, owner: str, provider, deadline: float) -> None:
 
     # Only evidence the report actually cites is stored, so "Why this joke?" shows just those items.
     cited = {a: evidence[a] for a in report.evidence_ids()}
-    _persist(job_id, owner, report, cited, usage, provider)
+    _persist(job_id, owner, report, cited, usage, provider, meta["language"])
 
 
 def run_job(job_id: str, owner: str) -> None:

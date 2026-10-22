@@ -20,11 +20,13 @@ class Settings(BaseSettings):
     public_base_url: str = ""
 
     # --- AI provider (PRD §9.1) ---
-    provider: str = "fake"  # fake | gemini | sarvam
+    provider: str = "auto"  # auto | sarvam | gemini | fake. auto = sarvam if SARVAM_API_KEY, else gemini if GEMINI_API_KEY, else fake
     gemini_api_key: str = ""
     gemini_model: str = "gemini-2.5-flash"
     sarvam_api_key: str = ""
     sarvam_model: str = "sarvam-105b-conversations"
+    sarvam_base_url: str = ""  # override for proxies/testing; default is the SDK production URL
+    sarvam_reasoning_effort: str = ""  # "", low, high or max; empty omits the parameter
     sarvam_json_mode: bool = False  # response_format=json_object; off until verified against the live model
     provider_timeout_s: float = 60.0
     max_output_tokens: int = 1800
@@ -80,10 +82,25 @@ class Settings(BaseSettings):
         return self.env not in ("dev", "test")
 
     @property
+    def resolved_provider(self) -> str:
+        """The provider actually in use. 'auto' picks a real provider whenever a key is configured."""
+        if self.provider != "auto":
+            return self.provider
+        if self.sarvam_api_key:
+            return "sarvam"
+        if self.gemini_api_key:
+            return "gemini"
+        return "fake"
+
+    @property
+    def is_demo_generator(self) -> bool:
+        return self.resolved_provider == "fake"
+
+    @property
     def provider_display_name(self) -> str:
-        if self.provider == "gemini":
+        if self.resolved_provider == "gemini":
             return "Google (Gemini API)"
-        if self.provider == "sarvam":
+        if self.resolved_provider == "sarvam":
             return "Sarvam AI"
         return "Built-in demo generator (nothing leaves this server)"
 
@@ -91,6 +108,11 @@ class Settings(BaseSettings):
         return {v.strip() for v in value.split(",") if v.strip()}
 
     def validate_for_runtime(self) -> None:
+        rp = self.resolved_provider
+        if rp == "sarvam" and not self.sarvam_api_key:  # explicit PROVIDER=sarvam with no key must never limp on
+            raise RuntimeError("PROVIDER=sarvam but SARVAM_API_KEY is empty")
+        if rp == "gemini" and not self.gemini_api_key:
+            raise RuntimeError("PROVIDER=gemini but GEMINI_API_KEY is empty")
         if self.youtube_connect_enabled:
             raise RuntimeError("YOUTUBE_CONNECT_ENABLED=true: the connected YouTube release is gated and not "
                                "implemented in this build (PRD §16.5). Leave it false.")
@@ -102,12 +124,12 @@ class Settings(BaseSettings):
                 problems.append("ENCRYPTION_KEYS must be set (Fernet keys outside the database)")
             if not self.secure_cookie:
                 problems.append("COOKIE_SECURE must be true in production")
-            if self.provider == "gemini" and not self.gemini_api_key:
+            if self.resolved_provider == "gemini" and not self.gemini_api_key:
                 problems.append("GEMINI_API_KEY is required when PROVIDER=gemini")
-            if self.provider == "sarvam" and not self.sarvam_api_key:
+            if self.resolved_provider == "sarvam" and not self.sarvam_api_key:
                 problems.append("SARVAM_API_KEY is required when PROVIDER=sarvam")
-            if self.provider == "fake":
-                problems.append("PROVIDER=fake is not allowed in production")
+            if self.resolved_provider == "fake":
+                problems.append("the built-in demo generator is not allowed in production: set SARVAM_API_KEY (or GEMINI_API_KEY)")
             if self.database_url.startswith("sqlite"):
                 problems.append("DATABASE_URL must be PostgreSQL in production")
             if problems:

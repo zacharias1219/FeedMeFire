@@ -1,13 +1,15 @@
 """Sarvam AI adapter (chat completions). Model, key and JSON mode are configuration."""
 from __future__ import annotations
 
+import logging
 import re
 
 import httpx
 
 from ..config import settings
-from .base import Provider, ProviderResult, ProviderTimeout, ProviderUnavailable, output_budget
+from .base import Provider, ProviderMisconfigured, ProviderResult, ProviderTimeout, ProviderUnavailable, output_budget
 
+log = logging.getLogger("rmf.provider")
 _THINK = re.compile(r"<think>.*?</think>", re.S | re.I)
 _FENCE = re.compile(r"^```(?:json)?\s*|\s*```$", re.I)
 
@@ -32,21 +34,38 @@ class SarvamProvider(Provider):
     def _chat(self, system: str, user: str, *, timeout: float, max_tokens: int, temperature: float, json_mode: bool = False):
         if not self.api_key:
             raise ProviderUnavailable("SARVAM_API_KEY is not configured")
-        from sarvamai import SarvamAI
-        from sarvamai.core.api_error import ApiError
+        try:
+            from sarvamai import SarvamAI
+        except ImportError as e:
+            raise ProviderMisconfigured(f"the 'sarvamai' package is not installed for this Python (missing module "
+                                        f"'{e.name}'); run: pip install -r requirements.txt") from e
+        try:  # SDK-internal path; do not let a layout change break error handling
+            from sarvamai.core.api_error import ApiError
+        except ImportError:
+            ApiError = ()  # type: ignore[assignment]  (isinstance(x, ()) is simply False)
+        client_kwargs: dict = {"api_subscription_key": self.api_key}
+        if settings.sarvam_base_url:  # proxy / local stand-in; production uses the SDK default
+            from sarvamai.environment import SarvamAIEnvironment
+            base = settings.sarvam_base_url.rstrip("/")
+            client_kwargs["environment"] = SarvamAIEnvironment(base=base, creative=base, production=base)
         kwargs = dict(model=self.model, messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
                       temperature=temperature, max_tokens=max_tokens,
                       request_options={"timeout_in_seconds": max(1, int(timeout)), "max_retries": 0})
         if json_mode:
             kwargs["response_format"] = {"type": "json_object"}
+        if settings.sarvam_reasoning_effort in ("low", "high", "max"):
+            kwargs["reasoning_effort"] = settings.sarvam_reasoning_effort
         try:
-            return SarvamAI(api_subscription_key=self.api_key).chat.completions(**kwargs)
+            return SarvamAI(**client_kwargs).chat.completions(**kwargs)
         except httpx.TimeoutException as e:
             raise ProviderTimeout("provider timed out") from e
-        except ApiError as e:  # never include the body: it can echo prompt content
-            raise ProviderUnavailable(f"provider returned HTTP {e.status_code}") from e
         except httpx.HTTPError as e:
             raise ProviderUnavailable("provider unreachable") from e
+        except Exception as e:  # noqa: BLE001
+            status = getattr(e, "status_code", None)
+            if isinstance(e, ApiError) or status is not None:  # never include the body: it can echo prompt content
+                raise ProviderUnavailable(f"provider returned HTTP {status}") from e
+            raise
 
     def generate(self, system: str, user: str, *, timeout: float) -> ProviderResult:
         resp = self._chat(system, user, timeout=timeout, max_tokens=output_budget(user),
@@ -56,6 +75,13 @@ class SarvamProvider(Provider):
         except (AttributeError, IndexError, TypeError):
             content = ""
         usage = getattr(resp, "usage", None)
+        # Diagnostics only (never content): lets an operator see truncation or empty answers in the logs.
+        finish = getattr(resp.choices[0], "finish_reason", None) if getattr(resp, "choices", None) else None
+        log.info("sarvam completion model=%s finish_reason=%s prompt_tokens=%s completion_tokens=%s chars=%d",
+                 self.model, finish, getattr(usage, "prompt_tokens", None), getattr(usage, "completion_tokens", None), len(content))
+        if not content.strip() or finish == "length":
+            log.warning("sarvam returned %s (finish_reason=%s): raise MAX_OUTPUT_TOKENS_INDIC/MAX_OUTPUT_TOKENS or lower "
+                        "SARVAM_REASONING_EFFORT", "an empty answer" if not content.strip() else "a truncated answer", finish)
         return ProviderResult(extract_json(content), int(getattr(usage, "prompt_tokens", 0) or 0),
                               int(getattr(usage, "completion_tokens", 0) or 0))
 

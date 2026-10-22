@@ -1,5 +1,5 @@
 # Local stack: PostgreSQL + web + dedicated worker.   docker compose up --build
-# The fake provider needs no API key. For Gemini set PROVIDER=gemini and GEMINI_API_KEY in .env.
+# With no key the built-in demo generator (canned roasts) is used. Set SARVAM_API_KEY (or GEMINI_API_KEY) in .env for a real model.
 x-app: &app
   build: .
   env_file: [.env]

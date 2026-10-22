@@ -25,6 +25,7 @@ ERRORS: dict[str, tuple[int, str, bool]] = {
     "IDEMPOTENCY_KEY_REQUIRED": (422, "An Idempotency-Key header is required.", False),
     "SAMPLE_NOT_APPROVED": (409, "Approve the final sample before generating.", False),
     "REGENERATION_NOT_ALLOWED": (409, "This report cannot be regenerated.", False),
+    "PROVIDER_MISCONFIGURED": (503, "The AI provider is not set up correctly on the server. If you run this server, check its logs.", False),
     "FEATURE_DISABLED": (503, "This feature is currently disabled.", True),
     "INTERNAL_ERROR": (500, "Something went wrong on our side.", True),
 }

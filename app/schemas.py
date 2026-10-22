@@ -85,12 +85,12 @@ class Persona(Strict):
 
 class Observation(Strict):
     title: Annotated[str, StringConstraints(min_length=1, max_length=80)]
-    joke: Annotated[str, StringConstraints(min_length=1, max_length=300)]
+    joke: Annotated[str, StringConstraints(min_length=1, max_length=400)]
     evidence_item_ids: Evidence
 
 
 class Contradiction(Strict):
-    joke: Annotated[str, StringConstraints(min_length=1, max_length=250)]
+    joke: Annotated[str, StringConstraints(min_length=1, max_length=400)]
     evidence_item_ids: Evidence
 
 

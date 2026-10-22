@@ -7,6 +7,11 @@ class ProviderError(Exception):
     retryable = True
 
 
+class ProviderMisconfigured(ProviderError):
+    """Setup problem (missing SDK, missing key). Retrying cannot help, so jobs fail immediately with a clear log line."""
+    retryable = False
+
+
 class ProviderUnavailable(ProviderError):
     """Provider returned an error or could not be reached (no work was done)."""
 

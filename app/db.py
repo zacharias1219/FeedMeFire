@@ -20,6 +20,8 @@ def hours_from_now(h: float) -> datetime:
 
 def make_engine(url: str | None = None):
     url = url or settings.database_url
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://"):]
     if url.startswith("postgresql://"):
         url = url.replace("postgresql://", "postgresql+psycopg://", 1)
     kwargs: dict = {"pool_pre_ping": True}

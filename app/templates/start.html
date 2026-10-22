@@ -5,6 +5,7 @@
 {% block content %}
 <div class="app-wrap">
   <div id="live" class="sr-only" role="status" aria-live="polite"></div>
+  <p class="warn demo-banner" id="demo-banner" role="note" hidden><strong>Demo mode:</strong> this server is using the built-in demo generator, so roasts are canned templates (the same opening and closing lines every time). Set <code>SARVAM_API_KEY</code> to use a real model.</p>
   <noscript><p class="notice">RoastMyFeed needs JavaScript to build your sample and report.</p></noscript>
 
   <ol class="progress" id="progress" aria-label="Progress">
@@ -112,7 +113,7 @@
 
   <!-- 5. results -->
   <section id="step-results" hidden aria-labelledby="res-h">
-    <div class="panel hero-result"><p class="eyebrow" id="res-intensity"></p><h1 id="res-h" tabindex="-1"></h1><p class="persona" id="res-persona"></p><p class="persona-note" id="res-persona-note"></p></div>
+    <div class="panel hero-result"><p class="eyebrow" id="res-intensity"></p><h1 id="res-h" tabindex="-1"></h1><p class="persona" id="res-persona"></p><p class="persona-note" id="res-persona-note"></p><p class="hint" id="res-source"></p></div>
     <div id="report-body"></div>
     <div class="panel" id="share-panel" aria-labelledby="share-h">
       <h2 id="share-h">Share card</h2>

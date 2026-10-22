@@ -301,6 +301,7 @@ async function loadReport(id) {
   const { report, evidence } = r;
   fillHero(report, r.intensity);
   renderBody($('#report-body'), report, evidence);
+  $('#res-source').textContent = r.provider === 'fake' ? 'Written by the built-in demo generator (canned template, not an AI model).' : `Written by ${state.cfg.provider_name} · ${r.model}`;
   $('#report-body').lang = r.language || 'en'; $('#res-h').lang = r.language || 'en'; $('#res-persona').lang = r.language || 'en';
   $('#res-expires').textContent = `at ${new Date(r.expires_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}`;
   const pick = clear($('#quote-pick'));
@@ -365,6 +366,7 @@ function wireResults() {
 async function boot() {
   state.cfg = await api('GET', '/api/v1/config');
   $$('[data-bind=min]').forEach((e) => { e.textContent = state.cfg.min_items; });
+  show($('#demo-banner'), !!state.cfg.is_demo_generator);
   clear($('#lang')).append(...state.cfg.languages.map((l) => h('option', { value: l.code }, l.code === 'en' ? 'English' : `${l.native} (${l.name})`)));
   $('#lang-note').textContent += state.cfg.provider === 'fake' ? ' Note: the built-in demo generator always writes English; connect Sarvam AI for other languages.' : '';
   $$('[data-bind=provider]').forEach((e) => { e.textContent = state.cfg.provider_name; });

@@ -28,7 +28,8 @@ router = APIRouter(prefix="/api/v1")
 def public_config():
     return {
         "provider_name": settings.provider_display_name,
-        "provider": settings.provider,
+        "provider": settings.resolved_provider,
+        "is_demo_generator": settings.is_demo_generator,
         "languages": language_list(),
         "policy_version": settings.policy_version,
         "provider_disclosure_version": settings.provider_disclosure_version,
@@ -272,6 +273,7 @@ def read_report(report_id: str, s: SessionModel = Depends(session_read), db: Ses
     db.commit()
     return {"id": r.id, "sample_id": r.sample_id, "intensity": r.intensity, "report": payload["report"],
             "evidence": payload["evidence"], "language": payload.get("language", "en"), "schema_version": r.schema_version, "provider": r.provider,
+            "model": r.model_identifier,
             "created_at": r.created_at.isoformat() + "Z", "expires_at": r.expires_at.isoformat() + "Z",
             **_regen_state(db, s, r)}
 

@@ -1,0 +1,45 @@
+# Render Blueprint. Dashboard: New + > Blueprint > pick this repo.
+# Secrets marked `sync: false` are prompted for on first deploy.
+services:
+  - type: web
+    name: feedmefire
+    runtime: docker
+    plan: free
+    healthCheckPath: /
+    # Migrate, then serve on the port Render provides.
+    dockerCommand: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'"
+    envVars:
+      - key: ENV
+        value: prod
+      - key: DATABASE_URL
+        fromDatabase:
+          name: feedmefire-db
+          property: connectionString
+      - key: AUTO_CREATE_TABLES
+        value: "false"
+      - key: APP_SECRET
+        generateValue: true
+      - key: ENCRYPTION_KEYS
+        sync: false
+      - key: PROVIDER
+        value: sarvam
+      - key: SARVAM_API_KEY
+        sync: false
+      - key: SARVAM_MODEL
+        value: sarvam-105b-conversations
+      - key: TRUST_PROXY
+        value: "true"
+      - key: EMBEDDED_WORKER
+        value: "true"
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: SUPPORT_CONTACT
+        sync: false
+      - key: METRICS_TOKEN
+        generateValue: true
+
+databases:
+  - name: feedmefire-db
+    plan: free
+    databaseName: roast
+    user: roast

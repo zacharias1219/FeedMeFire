@@ -21,6 +21,8 @@ Never diagnose, never mention addiction, never use profanity, never body-shame, 
 Use the requested intensity without relaxing safety restrictions.
 Attach valid evidence item IDs to every observation and every contradiction. Use only IDs that appear in the sample. Across the whole report, cite at least as many different items as min_distinct_items in the request says.
 Write 250 to 450 words in total. Plain text only: no HTML, no links, no markdown.
+Hard limits: exactly 2 contradictions, each a single JSON object with "joke" (max 350 characters) and "evidence_item_ids" (1 to 4 IDs like "item_01"). 4 to 6 observations, each joke max 350 characters. Keep every sentence short.
+Do not mention what the user has watched, their watch time or watch history; talk only about the listed items.
 Write every human-readable field in the requested output_language, in natural, colloquial, idiomatic phrasing in that language's own script (not transliteration). Quote item titles exactly as given. JSON keys, schema_version and evidence item IDs stay exactly as specified.
 Return only JSON matching the required schema, with no extra fields."""
 

@@ -166,7 +166,7 @@ def _call_pipeline(job_id: str, owner: str, provider, deadline: float) -> None:
         usage["out"] += res.output_tokens
         _set_status(job_id, owner, "checking")
 
-        problem = None
+        problem, detail = None, ""
         try:
             report = ReportOut.model_validate(json.loads(res.text))
             unknown = validate_evidence(report, aliases)
@@ -177,7 +177,11 @@ def _call_pipeline(job_id: str, owner: str, provider, deadline: float) -> None:
         except (ValueError, ValidationError) as e:  # JSONDecodeError is a ValueError
             problem = ",".join(sorted({".".join(map(str, err["loc"][:2])) for err in e.errors()})) \
                 if isinstance(e, ValidationError) else "json"
+            if isinstance(e, ValidationError):  # locations and error types only, never model text
+                detail = "; ".join(f'{".".join(map(str, er["loc"]))}:{er["type"]}' for er in e.errors()[:5])
         if problem:
+            log.warning("model output rejected: %s [%s] (repair_attempted=%s)", problem, detail, repaired,
+                        extra={"job_id": job_id})
             if repaired:
                 raise JobFailed("INVALID_MODEL_OUTPUT")
             repaired = True
@@ -193,6 +197,8 @@ def _call_pipeline(job_id: str, owner: str, provider, deadline: float) -> None:
             if not provider.moderate("\n".join(report.narrative_text()), timeout=min(20, max(3, deadline - time.monotonic()))):
                 violations = ["judge_rejected"]
         if violations:
+            log.warning("output flagged by safety: %s (retry_attempted=%s)", ", ".join(violations), safer,
+                        extra={"job_id": job_id})
             if safer:
                 raise JobFailed("UNSAFE_OUTPUT")  # rejected content is discarded, never shown or logged
             safer, extra = True, prompt.SAFER_SUFFIX.format(cats=", ".join(violations))

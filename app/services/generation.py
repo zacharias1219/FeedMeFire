@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
+import traceback
 import time
 from datetime import timedelta
 
@@ -21,7 +23,7 @@ from ..config import settings
 from ..crypto import decrypt_text, encrypt_json
 from ..db import hours_from_now, session_scope, utcnow
 from ..models import GenerationJob, Report, Sample, SampleItem, SessionModel
-from ..providers.base import ProviderTimeout, ProviderUnavailable
+from ..providers.base import ProviderMisconfigured, ProviderTimeout, ProviderUnavailable
 from ..languages import disclaimer_for
 from ..schemas import ReportOut, validate_evidence
 from . import analytics, items as it, prompt, safety
@@ -225,10 +227,17 @@ def run_job(job_id: str, owner: str) -> None:
         log.info("job aborted", extra={"job_id": job_id, "reason": str(e)})
     except JobFailed as e:
         _fail(job_id, owner, e.code)
+    except ProviderMisconfigured as e:  # our own message: safe to log; retrying cannot fix a setup problem
+        log.error("provider misconfigured: %s", e, extra={"job_id": job_id})
+        _fail(job_id, owner, "PROVIDER_MISCONFIGURED")
     except ProviderTimeout:
         _retry_or_fail(job_id, owner, "GENERATION_TIMEOUT", ambiguous=True)
     except ProviderUnavailable:
         _retry_or_fail(job_id, owner, "PROVIDER_UNAVAILABLE")
     except Exception as e:  # noqa: BLE001 - last resort. Log the type only: messages/tracebacks may hold content.
-        log.error("job crashed (%s)", type(e).__name__, extra={"job_id": job_id})
+        # Type, the missing module name (ImportError only) and the failing location; never the message, which may hold content.
+        tb = traceback.extract_tb(e.__traceback__)[-1] if e.__traceback__ else None
+        where = f" at {os.path.basename(tb.filename)}:{tb.lineno} in {tb.name}" if tb else ""
+        missing = f" (missing module '{e.name}')" if isinstance(e, ImportError) and e.name else ""
+        log.error("job crashed: %s%s%s", type(e).__name__, missing, where, extra={"job_id": job_id})
         _fail(job_id, owner, "INTERNAL_ERROR")

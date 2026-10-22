@@ -7,7 +7,7 @@ import re
 import httpx
 
 from ..config import settings
-from .base import Provider, ProviderResult, ProviderTimeout, ProviderUnavailable, output_budget
+from .base import Provider, ProviderMisconfigured, ProviderResult, ProviderTimeout, ProviderUnavailable, output_budget
 
 log = logging.getLogger("rmf.provider")
 _THINK = re.compile(r"<think>.*?</think>", re.S | re.I)
@@ -34,8 +34,15 @@ class SarvamProvider(Provider):
     def _chat(self, system: str, user: str, *, timeout: float, max_tokens: int, temperature: float, json_mode: bool = False):
         if not self.api_key:
             raise ProviderUnavailable("SARVAM_API_KEY is not configured")
-        from sarvamai import SarvamAI
-        from sarvamai.core.api_error import ApiError
+        try:
+            from sarvamai import SarvamAI
+        except ImportError as e:
+            raise ProviderMisconfigured(f"the 'sarvamai' package is not installed for this Python (missing module "
+                                        f"'{e.name}'); run: pip install -r requirements.txt") from e
+        try:  # SDK-internal path; do not let a layout change break error handling
+            from sarvamai.core.api_error import ApiError
+        except ImportError:
+            ApiError = ()  # type: ignore[assignment]  (isinstance(x, ()) is simply False)
         client_kwargs: dict = {"api_subscription_key": self.api_key}
         if settings.sarvam_base_url:  # proxy / local stand-in; production uses the SDK default
             from sarvamai.environment import SarvamAIEnvironment
@@ -52,10 +59,13 @@ class SarvamProvider(Provider):
             return SarvamAI(**client_kwargs).chat.completions(**kwargs)
         except httpx.TimeoutException as e:
             raise ProviderTimeout("provider timed out") from e
-        except ApiError as e:  # never include the body: it can echo prompt content
-            raise ProviderUnavailable(f"provider returned HTTP {e.status_code}") from e
         except httpx.HTTPError as e:
             raise ProviderUnavailable("provider unreachable") from e
+        except Exception as e:  # noqa: BLE001
+            status = getattr(e, "status_code", None)
+            if isinstance(e, ApiError) or status is not None:  # never include the body: it can echo prompt content
+                raise ProviderUnavailable(f"provider returned HTTP {status}") from e
+            raise
 
     def generate(self, system: str, user: str, *, timeout: float) -> ProviderResult:
         resp = self._chat(system, user, timeout=timeout, max_tokens=output_budget(user),

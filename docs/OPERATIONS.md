@@ -37,6 +37,13 @@ That is the built-in demo generator (fixed template text). Check, in order:
 3. `.env` is read from the directory the process starts in; hosted platforms must set the variable in their dashboard, not a local `.env`.
 4. An explicit `PROVIDER=fake` (the old `.env.example` default) overrides the key. Remove it or set `PROVIDER=auto`.
 5. The "Use the fictional demo sample" button always submits the same 15 items, so even a real model sees identical input.
+### Troubleshooting: clicking "Roast me" fails / log says `job crashed ... (ModuleNotFoundError)`
+A package is missing from the Python that runs the **server and worker** (usually `sarvamai`: you installed it in one environment and run
+uvicorn from another, or pulled new code without re-installing). The app now refuses to start with a message naming that Python and the
+fix; a job hitting it fails at once as `PROVIDER_MISCONFIGURED`, and `/health/ready` returns 503 with `provider_ok: false`. Fix:
+`python -m pip install -r requirements.txt` using the same interpreter you start the server with (`python -m uvicorn app.main:app`), then restart.
+Unexpected crashes log the exception type, the missing module name and the failing file:line (never content).
+
 The startup log prints `AI provider = ...` (a WARNING in demo mode); Sarvam calls log `finish_reason` and token counts (never content).
 - The preferences screen offers English, Hindi, Tamil, Telugu, Bengali and Marathi (`app/languages.py`). The language travels with the job,
   is stored with the report, and is kept on regeneration. The built-in `fake` provider always writes English.

@@ -19,7 +19,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import db as dbm, logging_setup
+from . import db as dbm, logging_setup, providers
 from .config import settings
 from .errors import AppError
 from .models import Base
@@ -79,6 +79,7 @@ def landing() -> tuple[str, list[str]]:
 async def lifespan(app: FastAPI):
     logging_setup.setup()
     settings.validate_for_runtime()
+    providers.check_ready()
     if settings.is_demo_generator:
         log.warning("AI provider = BUILT-IN DEMO GENERATOR: every roast is a canned template. Set SARVAM_API_KEY "
                     "(or GEMINI_API_KEY) and leave PROVIDER=auto to use a real model.")
@@ -169,7 +170,12 @@ def ready():
             d.execute(text("select 1"))
     except Exception:
         return JSONResponse({"status": "unavailable", "database": False}, status_code=503)
-    return {"status": "ok", "database": True, "provider": settings.resolved_provider,
+    try:
+        providers.check_ready()
+    except RuntimeError:
+        return JSONResponse({"status": "unavailable", "database": True, "provider": settings.resolved_provider,
+                             "provider_ok": False}, status_code=503)
+    return {"status": "ok", "database": True, "provider_ok": True, "provider": settings.resolved_provider,
             "demo_generator": settings.is_demo_generator,
             "generation_enabled": settings.generation_enabled}
 

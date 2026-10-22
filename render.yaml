@@ -7,7 +7,7 @@ services:
     plan: free
     healthCheckPath: /
     # Migrate, then serve on the port Render provides.
-    dockerCommand: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'"
+    dockerCommand: python -m app.start
     envVars:
       - key: ENV
         value: prod
